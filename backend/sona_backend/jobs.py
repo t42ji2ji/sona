@@ -198,6 +198,7 @@ def _run_engine(job: dict, engine: str, request: dict, span=(0.0, 1.0)) -> dict:
         changed = False
         if event["type"] == "stage":
             job["stage"] = event["stage"]
+            job["eta_seconds"] = None
             changed = True
         if event.get("progress", -1) >= 0:
             job["progress"] = round(lo + (hi - lo) * event["progress"], 4)
