@@ -26,10 +26,12 @@ export type Component = {
 
 export type JobType = 'song' | 'instrumental' | 'cover' | 'stems' | 'voice'
 
+export type Quality = 'fast' | 'high'
+
 export type JobParams = {
-  song: { title?: string; style: string; lyrics: string; mode?: 'full' | 'melody' | 'off'; seed?: number }
-  instrumental: { title?: string; style: string; seed?: number }
-  cover: { title?: string; upload_id: string; style: string; lyrics?: string; instrumental?: boolean; seed?: number }
+  song: { title?: string; style: string; lyrics: string; mode?: 'full' | 'melody' | 'off'; seed?: number; quality?: Quality }
+  instrumental: { title?: string; style: string; seed?: number; quality?: Quality }
+  cover: { title?: string; upload_id: string; style: string; lyrics?: string; instrumental?: boolean; seed?: number; quality?: Quality }
   stems: { title?: string; upload_id?: string; track_id?: string; model?: 'htdemucs' | 'htdemucs_ft' }
   voice: { voice_id: string; text: string; backend?: 'local' | 'api' }
 }

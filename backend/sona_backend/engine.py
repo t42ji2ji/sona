@@ -11,7 +11,7 @@ from typing import Callable
 from . import config, events
 
 # engine -> venv. sheetsage shares envs/demucs (same torch 2.8 pins), but counts as its own engine.
-ENVS = {"yue2": "yue2", "demucs": "demucs", "sheetsage": "demucs", "voice-mlx": "voice-mlx"}
+ENVS = {"yue2": "yue2-mlx" if config.device() == "mps" else "yue2", "demucs": "demucs", "sheetsage": "demucs", "voice-mlx": "voice-mlx"}
 PERSISTENT = {"voice-mlx"}
 EVENT_ENGINE = {"sheetsage": "demucs"}   # contract's engine names: yue2 | demucs | voice-mlx
 

@@ -29,6 +29,10 @@ COMPONENTS = [
      "deps": ["yue2-infer @ https://github.com/multimodal-art-projection/YuE/releases/download/yue2-v0.1.6/"
               "yue2_infer-0.1.6-py3-none-any.whl"
               "#sha256=129a015327a2eca530760ffd2163ccb8cb65f7e601715de1d9626a40c568e2e2"]},
+    {"id": "env:yue2-mlx", "kind": "env", "name": "YuE2 執行環境（Apple Silicon）",
+     "description": "寫歌、純音樂與翻唱用的 MLX 環境（mlx-Yue），比 PyTorch 版快、省記憶體",
+     "needed_for": SONG, "size_bytes": 350_000_000, "python": "3.12",
+     "deps": ["mlx-yue @ https://github.com/vanch007/mlx-Yue/archive/c5b5a8190f78c74aa671a4caa19dae8b8e04b3d8.zip"]},
     {"id": "env:demucs", "kind": "env", "name": "拆軌與轉譜執行環境",
      "description": "Demucs 拆軌，以及翻唱時用 SheetSage2 把歌轉成旋律譜",
      "needed_for": ["stems", "cover"], "size_bytes": 650_000_000, "size_cuda": 5_500_000_000,
@@ -47,6 +51,15 @@ COMPONENTS = [
      "description": "把模型輸出還原成 48kHz 立體聲", "needed_for": SONG,
      "hf": [("m-a-p/YuE2-Vae", {"model.safetensors": 530512720, "config.json": 1378,
                                 "weights_manifest.json": 178, "modeling_vae.py": 25265})]},
+    {"id": "model:yue2-mlx", "kind": "model", "name": "YuE2-3B（MLX）",
+     "description": "寫歌模型與音訊解碼器，社群轉好的 Apple Silicon 版（mlx-Yue）", "needed_for": SONG,
+     "local": ("vanch007/mlx-Yue2-3B", "5f7620e546fb3c6130a09a7e18172e3bb7aaeddb", {
+         "ar-8bit.safetensors": 2656158264, "ar-bf16.safetensors": 4331951136, "nar-bf16.safetensors": 2929490456,
+         "qwen.tiktoken": 2561218, "config.json": 959, "conversion.json": 3784, "LICENSE": 20309,
+         "THIRD_PARTY_NOTICES.md": 793, "licenses/SnakeBeta-NVIDIA-MIT.txt": 1076,
+         "licenses/stable-audio-tools-MIT.txt": 1069, "vae/model.safetensors": 530512720, "vae/config.json": 1378,
+         "vae/weights_manifest.json": 178, "vae/LICENSE": 20309, "vae/THIRD_PARTY_NOTICES.md": 793,
+         "vae/licenses/SnakeBeta-NVIDIA-MIT.txt": 1076, "vae/licenses/stable-audio-tools-MIT.txt": 1069})},
     {"id": "model:sheetsage2", "kind": "model", "name": "SheetSage2＋MERT-v2",
      "description": "翻唱用：把上傳的歌轉成旋律譜", "needed_for": ["cover"],
      "hf": [("m-a-p/SheetSage2", {"model.safetensors": 228738564, "config.json": 2060,
@@ -72,10 +85,13 @@ COMPONENTS = [
          "tokenizer_config.json": 103580, "special_tokens_map.json": 102779, "chat_template.jinja": 7756})]},
 ]
 BY_ID = {c["id"]: c for c in COMPONENTS}
+MLX_YUE2 = ["env:yue2-mlx", "model:yue2-mlx"]
+TORCH_YUE2 = ["env:yue2", "model:yue2-3b", "model:yue2-vae"]
+YUE2 = MLX_YUE2 if config.device() == "mps" else TORCH_YUE2
 FEATURE_COMPONENTS = {
-    "song": ["env:yue2", "model:yue2-3b", "model:yue2-vae"],
-    "instrumental": ["env:yue2", "model:yue2-3b", "model:yue2-vae"],
-    "cover": ["env:yue2", "model:yue2-3b", "model:yue2-vae", "env:demucs", "model:sheetsage2"],
+    "song": YUE2,
+    "instrumental": YUE2,
+    "cover": [*YUE2, "env:demucs", "model:sheetsage2"],
     "stems": ["env:demucs", "model:htdemucs"],
     "voice_local": ["env:voice-mlx", "model:drama3-mlx"],
 }
@@ -92,12 +108,16 @@ def size_of(c: dict) -> int:
         return c["size_cuda"] if config.device() == "cuda" and "size_cuda" in c else c["size_bytes"]
     if "torch" in c:
         return sum(c["torch"].values())
+    if "local" in c:
+        return sum(c["local"][2].values())
     return sum(sum(spec[1].values()) for spec in c["hf"])
 
 
 def supported(c: dict) -> bool:
     if c["id"] in ("env:voice-mlx", "model:drama3-mlx"):
         return config.capabilities()["voice_local"]["available"]
+    if c["id"] in MLX_YUE2 + TORCH_YUE2:
+        return c["id"] in YUE2
     return True
 
 
@@ -114,6 +134,17 @@ def _snapshot(repo: str) -> Path | None:
             return snap
     snaps = sorted((root / "snapshots").glob("*"), key=lambda p: p.stat().st_mtime) if (root / "snapshots").is_dir() else []
     return snaps[-1] if snaps else None
+
+
+def local_dirs() -> tuple[Path, Path]:
+    """mlx-Yue model and decoder dirs. It refuses symlinks and extra files, so these sit outside the HF cache."""
+    root = config.data_dir() / "models"
+    return root / "yue2-mlx", root / "yue2-mlx-vae"
+
+
+def _local_path(name: str) -> Path:
+    model, vae = local_dirs()
+    return vae / name[4:] if name.startswith("vae/") else model / name
 
 
 def hf_path(repo: str) -> Path | None:
@@ -138,6 +169,10 @@ def _disk(c: dict) -> tuple[bool, int]:
                 ready = False
                 done += part.stat().st_size if part.is_file() else 0
         return ready, done
+    if "local" in c:
+        ready = all(_local_path(n).is_file() and _local_path(n).stat().st_size == size for n, size in c["local"][2].items())
+        part = local_dirs()[0].with_suffix(".part")
+        return ready, size_of(c) if ready else min(_dir_size(part) if part.is_dir() else 0, size_of(c))
     done, ready = 0, True
     for repo, files, *_ in c["hf"]:
         snap = _snapshot(repo)
@@ -169,7 +204,7 @@ def describe(id: str) -> dict:
         ok, done = _disk(c)
     state = "ready" if ok else "missing"
     status = _status.get(id)
-    if not supported(c):
+    if not supported(c) and not ok:     # still on disk: stays deletable
         state = "unsupported"
     elif status:
         state = status["state"]
@@ -242,6 +277,9 @@ def remove(id: str):
         _fake_missing.add(id)
     elif c["kind"] == "env":
         shutil.rmtree(env_dir(c), ignore_errors=True)
+    elif "local" in c:
+        for path in (*local_dirs(), local_dirs()[0].with_suffix(".part")):
+            shutil.rmtree(path, ignore_errors=True)
     elif "torch" in c:
         for name in c["torch"]:
             for path in (config.torch_checkpoint_dir() / name, (config.torch_checkpoint_dir() / name).with_suffix(".part")):
@@ -305,7 +343,7 @@ def _install_env(c: dict):
     env = {k: v for k, v in os.environ.items() if k != "UV_PROJECT_ENVIRONMENT"}
     size = size_of(c)
     _set(c["id"], {"state": "installing", "done": int(size * 0.02)})
-    _run([uv, "venv", "--python", "3.11", "--python-preference", "only-managed", "--seed", str(venv)], c["id"], env=env)
+    _run([uv, "venv", "--python", c.get("python", "3.11"), "--python-preference", "only-managed", "--seed", str(venv)], c["id"], env=env)
     cmd = [uv, "pip", "install", "--python", str(config.env_python(c["id"].split(":", 1)[1])), *c["deps"]]
     if config.device() == "cuda":
         cmd += ["--torch-backend", "auto"]
@@ -328,6 +366,23 @@ def _install_hf(c: dict):
         allow = patterns[0] if patterns else list(files)
         _run([sys.executable, "-c", script, repo, json.dumps(allow)], c["id"],
              lambda: _set(c["id"], {"state": "installing"}), env)
+
+
+def _install_local(c: dict):
+    repo, revision, files = c["local"]
+    model, vae = local_dirs()
+    part = model.with_suffix(".part")
+    script = ("import sys, json, os, threading; from huggingface_hub import snapshot_download; "
+              "threading.Thread(target=lambda: (sys.stdin.read(), os._exit(1)), daemon=True).start(); "
+              "snapshot_download(sys.argv[1], revision=sys.argv[2], local_dir=sys.argv[3], allow_patterns=json.loads(sys.argv[4]))")
+    env = {**os.environ, "HF_HUB_DISABLE_XET": "1"}
+    _run([sys.executable, "-c", script, repo, revision, str(part), json.dumps(list(files))], c["id"],
+         lambda: _set(c["id"], {"state": "installing"}), env)
+    shutil.rmtree(part / ".cache", ignore_errors=True)
+    for path in (model, vae):
+        shutil.rmtree(path, ignore_errors=True)
+    (part / "vae").rename(vae)
+    part.rename(model)
 
 
 def _install_torch(c: dict):
@@ -380,6 +435,8 @@ def _installer():
                 _install_env(c)
             elif "torch" in c:
                 _install_torch(c)
+            elif "local" in c:
+                _install_local(c)
             else:
                 _install_hf(c)
             _set(id, None)

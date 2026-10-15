@@ -1,6 +1,6 @@
-"""YuE2 worker: song / instrumental / cover. Runs in envs/yue2.
+"""YuE2 worker: song / instrumental / cover. Runs in envs/yue2-mlx on Apple Silicon (mlx-Yue), envs/yue2 elsewhere.
 
-Request: {"job", "params", "out", "device", "memory_budget_gib", "abc"?}
+Request: {"job", "params", "out", "device", "memory_budget_gib", "models_dir", "abc"?}
 `abc` is the SheetSage2 melody score for covers.
 """
 import re
@@ -17,6 +17,7 @@ from instrumentalize import convert_score  # noqa: E402
 TOKENS_PER_SECOND = 25          # VAE downsampling 1920 at 48 kHz
 SEMANTIC_MAX = 9000
 PLANNING_LYRICS = "[Intro]\n\n[Verse]\n\n[Chorus]\n\n[Outro]\n"
+MLX = sys.platform == "darwin"
 
 
 def instrumental_style(style):
@@ -42,6 +43,11 @@ def instrumental_request(SongRequest, abc, style, seed, keep_chords):
 
 
 def load(request):
+    from yue2.protocol import GenerationConfig
+
+    generation = GenerationConfig(ode_steps=32 if request["params"].get("quality") == "high" else 8)
+    if MLX:
+        return load_mlx(request, generation)
     import yue2.pipeline
     from yue2 import YuE2Pipeline
 
@@ -50,13 +56,28 @@ def load(request):
     device = request["device"]
     return YuE2Pipeline.from_pretrained(
         "m-a-p/YuE2-3B", vae="m-a-p/YuE2-Vae", device=device, local_files_only=True,
-        backend="torch" if device == "cuda" else "torch-eager",
+        backend="torch" if device == "cuda" else "torch-eager", generation_config=generation,
         memory_budget_gib=request["memory_budget_gib"], verify_hashes=False, progress=False)
+
+
+def load_mlx(request, generation):
+    import lyra.measure
+    from lyra import YuE2Pipeline
+
+    # mlx-Yue stops on any new swap or a memory-pressure warning, which background apps trigger
+    # on a busy Mac. Only stop when the system is critically short.
+    def check(self, sample):
+        if sample["system_memory_pressure_level"] >= 4:
+            raise MemoryError("系統記憶體嚴重不足，已停止生成。請關掉其他程式後再試一次。")
+    lyra.measure.GPUExecution._check_sample = check
+    models = Path(request["models_dir"])
+    return YuE2Pipeline.from_pretrained(
+        str(models / "yue2-mlx"), vae=str(models / "yue2-mlx-vae"), precision="8bit", local_files_only=True,
+        generation_config=generation, progress=False)
 
 
 def handle(request):
     from yue2.protocol import SongRequest
-    from yue2.nar import synthesize
 
     job, params = request["job"], request["params"]
     seed = int(params.get("seed") or 831001)
@@ -119,9 +140,16 @@ def handle(request):
     def on_nar(done, steps):
         progress(0.75 + 0.2 * done / steps, rate.eta(done, steps))
 
-    latents = synthesize(model, semantic.plan.prefix, semantic.tokens, semantic.plan.request.seed,
-                         steps=pipe.generation_config.ode_steps, context=pipe.generation_config.context,
-                         offload_ar=pipe.offload_ar, on_progress=on_nar).detach().float().cpu().numpy()
+    args = (model, semantic.plan.prefix, semantic.tokens, semantic.plan.request.seed)
+    steps, context = pipe.generation_config.ode_steps, pipe.generation_config.context
+    if MLX:
+        from lyra.nar import synthesize
+        latents = synthesize(*args, steps=steps, context=context, on_progress=on_nar,
+                             query_chunk_size=pipe.query_chunk_size)
+    else:
+        from yue2.nar import synthesize
+        latents = synthesize(*args, steps=steps, context=context, offload_ar=pipe.offload_ar,
+                             on_progress=on_nar).detach().float().cpu().numpy()
 
     stage("解碼音訊", 0.95)
     audio = pipe.decode(latents)

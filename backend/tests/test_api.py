@@ -6,6 +6,9 @@ from pathlib import Path
 import httpx
 
 from conftest import TOKEN, sine_wav, wait_component, wait_job
+from sona_backend import components
+
+SONG_MODEL = components.YUE2[1]   # model:yue2-mlx on Apple Silicon, model:yue2-3b elsewhere
 
 
 def upload(api, tmp_path, seconds=5.0, name="song.wav"):
@@ -63,7 +66,8 @@ def test_system(api):
 def test_components_listed_ready(api):
     comps = api.get("/components").json()
     ids = {c["id"] for c in comps}
-    assert {"env:yue2", "env:demucs", "env:voice-mlx", "model:yue2-3b", "model:yue2-vae", "model:sheetsage2",
+    assert {"env:yue2", "env:yue2-mlx", "env:demucs", "env:voice-mlx", "model:yue2-3b", "model:yue2-vae", "model:yue2-mlx",
+            "model:sheetsage2",
             "model:htdemucs", "model:htdemucs-ft", "model:drama3-mlx"} == ids
     for c in comps:
         assert c["state"] in ("ready", "unsupported")
@@ -71,33 +75,33 @@ def test_components_listed_ready(api):
 
 
 def test_component_install_progress_and_job_gate(api, tmp_path):
-    api.delete("/components/model:yue2-3b").raise_for_status()
-    assert wait_component(api, "model:yue2-3b", ["missing"])["done_bytes"] == 0
+    api.delete(f"/components/{SONG_MODEL}").raise_for_status()
+    assert wait_component(api, SONG_MODEL, ["missing"])["done_bytes"] == 0
     job = wait_job(api, submit(api, "song", style="pop", lyrics="[Verse]\nla")["id"])
     assert job["state"] == "failed" and "YuE2-3B" in job["error"]
     seen = []
-    r = api.post("/components/model:yue2-3b/install")
+    r = api.post(f"/components/{SONG_MODEL}/install")
     assert r.json()["state"] in ("queued", "installing", "ready")
     deadline = time.monotonic() + 10
     while time.monotonic() < deadline:
-        c = next(c for c in api.get("/components").json() if c["id"] == "model:yue2-3b")
+        c = next(c for c in api.get("/components").json() if c["id"] == SONG_MODEL)
         seen.append((c["state"], c["done_bytes"]))
         if c["state"] == "ready":
             break
     assert seen[-1][0] == "ready" and seen[-1][1] == c["size_bytes"]
     installing = [d for s, d in seen if s == "installing"]
     assert installing == sorted(installing)
-    api.post("/components/model:yue2-3b/install").raise_for_status()   # idempotent
-    assert wait_component(api, "model:yue2-3b", ["ready"])
+    api.post(f"/components/{SONG_MODEL}/install").raise_for_status()   # idempotent
+    assert wait_component(api, SONG_MODEL, ["ready"])
 
 
 def test_component_cancel(api):
-    api.delete("/components/model:yue2-vae").raise_for_status()
-    api.post("/components/model:yue2-vae/install")
-    api.post("/components/model:yue2-vae/cancel")
-    assert wait_component(api, "model:yue2-vae", ["missing"])["state"] == "missing"
-    api.post("/components/model:yue2-vae/install")
-    wait_component(api, "model:yue2-vae", ["ready"])
+    api.delete("/components/model:sheetsage2").raise_for_status()
+    api.post("/components/model:sheetsage2/install")
+    api.post("/components/model:sheetsage2/cancel")
+    assert wait_component(api, "model:sheetsage2", ["missing"])["state"] == "missing"
+    api.post("/components/model:sheetsage2/install")
+    wait_component(api, "model:sheetsage2", ["ready"])
 
 
 def test_feature_install(api):
@@ -240,7 +244,7 @@ def test_sse(api, server):
     events, done = read_events(server, lambda ev: any(
         k == "job" and d["id"] == job_id.get("id") and d["state"] == "done" for k, d in ev))
     time.sleep(0.5)
-    assert sum(1 for k, _ in events if k == "component") == 9    # snapshot on connect
+    assert sum(1 for k, _ in events if k == "component") == 11   # snapshot on connect
     job_id["id"] = submit(api, "song", style="pop", lyrics="hello")["id"]
     assert done.wait(20)
     job_events = [d for k, d in events if k == "job" and d["id"] == job_id["id"]]

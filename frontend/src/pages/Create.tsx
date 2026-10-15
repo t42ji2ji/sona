@@ -3,7 +3,7 @@ import { api } from '../api.ts'
 import { useT } from '../i18n.ts'
 import type { Key } from '../i18n.ts'
 import { report, useApp } from '../store.ts'
-import type { Feature, Job, JobParams, JobType, Upload } from '../types.ts'
+import type { Feature, Job, JobParams, JobType, Quality, Upload } from '../types.ts'
 import { FeatureGate } from '../components/FeatureGate.tsx'
 import { DropUpload } from '../components/Upload.tsx'
 import { TrackRow } from '../components/TrackRow.tsx'
@@ -22,6 +22,7 @@ export function Create() {
   const [lyrics, setLyrics] = useDraft('lyrics')
   const [mode, setMode] = useState<'full' | 'melody' | 'off'>('full')
   const [seed, setSeed] = useState('')
+  const [quality, setQuality] = useState<Quality>('fast')
   const [upload, setUpload] = useState<Upload | null>(null)
   const [instrumental, setInstrumental] = useState(false)
   const [stemModel, setStemModel] = useState<'htdemucs' | 'htdemucs_ft'>('htdemucs')
@@ -45,10 +46,10 @@ export function Create() {
     try {
       let job: Job
       const make = <T extends JobType>(type: T, p: JobParams[T]) => api.createJob(type, p)
-      if (tab === 'song') job = await make('song', { title: ttl, style, lyrics, mode, seed: seedNum })
-      else if (tab === 'instrumental') job = await make('instrumental', { title: ttl, style, seed: seedNum })
+      if (tab === 'song') job = await make('song', { title: ttl, style, lyrics, mode, seed: seedNum, quality })
+      else if (tab === 'instrumental') job = await make('instrumental', { title: ttl, style, seed: seedNum, quality })
       else if (tab === 'cover')
-        job = await make('cover', { title: ttl, upload_id: upload!.upload_id, style, instrumental, lyrics: instrumental ? undefined : lyrics, seed: seedNum })
+        job = await make('cover', { title: ttl, upload_id: upload!.upload_id, style, instrumental, lyrics: instrumental ? undefined : lyrics, seed: seedNum, quality })
       else job = await make('stems', { title: ttl, upload_id: upload!.upload_id, model: stemModel })
       useApp.setState((s) => ({ jobs: { ...s.jobs, [job.id]: job } }))
       if (tab === 'cover' || tab === 'stems') setUpload(null)
@@ -126,6 +127,16 @@ export function Create() {
               <span>{t('create.title')}</span>
               <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('create.titlePh')} />
             </label>
+            {tab !== 'stems' && (
+              <div className="field">
+                <span>{t('create.quality')}</span>
+                <div className="segmented small">
+                  {(['fast', 'high'] as const).map((q) => (
+                    <button key={q} className={quality === q ? 'on' : ''} onClick={() => setQuality(q)}>{t(`quality.${q}`)}</button>
+                  ))}
+                </div>
+              </div>
+            )}
             {tab !== 'stems' && (
               <label className="field">
                 <span>{t('create.seed')}</span>

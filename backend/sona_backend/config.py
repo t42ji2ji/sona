@@ -103,7 +103,7 @@ def capabilities() -> dict:
     if kind == "mps" and info["ram_gb"] < 16:
         yue = {"available": False, "reason": "這台 Mac 記憶體不到 16GB，跑不動 YuE2。"}
     elif kind == "mps":
-        yue = {"available": True, "speed_hint": "約每分鐘生成 10 秒音樂"}
+        yue = {"available": True, "speed_hint": "快速模式約需歌曲長度的 2 倍時間，高品質約 5 倍"}
     elif kind == "cuda" and (info["accelerator"]["vram_gb"] or 0) < 12:
         yue = {"available": False, "reason": "顯示卡記憶體不到 12GB，跑不動 YuE2。"}
     elif kind == "cuda":

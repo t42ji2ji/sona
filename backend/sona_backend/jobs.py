@@ -130,6 +130,8 @@ def validate(type: str, params: dict) -> dict:
             raise ApiError(400, "missing_api_key", "還沒填 Fish Audio API key，請先到設定填寫。")
     else:
         raise ApiError(400, "invalid_type", "type 只能是 song、instrumental、cover、stems 或 voice。")
+    if type in ("song", "instrumental", "cover") and p.setdefault("quality", "fast") not in ("fast", "high"):
+        raise ApiError(400, "invalid_params", "quality 只能是 fast 或 high。")
     if type in FEATURE and not config.capabilities()[FEATURE[type]]["available"]:
         raise ApiError(400, "unsupported", config.capabilities()[FEATURE[type]]["reason"])
     return p
@@ -209,7 +211,8 @@ def _run_engine(job: dict, engine: str, request: dict, span=(0.0, 1.0)) -> dict:
         if changed or time.monotonic() - last[0] > 0.5:
             last[0] = time.monotonic()
             save(job)
-    request = {"device": config.device(), "memory_budget_gib": _memory_budget(), **request}
+    request = {"device": config.device(), "memory_budget_gib": _memory_budget(),
+               "models_dir": str(config.data_dir() / "models"), **request}
     return manager.run(engine, request, on_event)
 
 
