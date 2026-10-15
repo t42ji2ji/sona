@@ -1,0 +1,85 @@
+{
+  "name": "sona",
+  "productName": "Sona",
+  "version": "0.1.0",
+  "private": true,
+  "description": "本機 AI 音樂與聲音",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "npm --prefix frontend run build && electron-builder --dir",
+    "dist:mac": "node scripts/fetch-uv.mjs && npm --prefix frontend run build && electron-builder --mac dir --arm64 -c.mac.notarize=false",
+    "dist:mac:notarize": "node scripts/fetch-uv.mjs && npm --prefix frontend run build && APPLE_KEYCHAIN_PROFILE=away-blur electron-builder --mac dmg --arm64",
+    "dist:win": "node scripts/fetch-uv.mjs && npm --prefix frontend run build && electron-builder --win nsis --x64",
+    "test": "node --test electron/test/*.test.js"
+  },
+  "devDependencies": {
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "app.dorara.sona",
+    "productName": "Sona",
+    "directories": {
+      "output": "dist",
+      "buildResources": "electron/resources"
+    },
+    "files": [
+      "package.json",
+      "electron/**/*",
+      "!electron/dev/**",
+      "!electron/test/**",
+      "!electron/resources/**",
+      "frontend/dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "backend",
+        "to": "backend",
+        "filter": [
+          "**/*",
+          "!.venv/**",
+          "!**/__pycache__/**",
+          "!tests/**",
+          "!.pytest_cache/**"
+        ]
+      }
+    ],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.music",
+      "identity": "S59943574Z",
+      "forceCodeSigning": true,
+      "hardenedRuntime": true,
+      "notarize": true,
+      "extraResources": [
+        {
+          "from": "build/uv/darwin-${arch}",
+          "to": "uv"
+        }
+      ],
+      "sign": "scripts/sign-mac.js",
+      "entitlements": "electron/resources/entitlements.mac.plist",
+      "entitlementsInherit": "electron/resources/entitlements.mac.plist",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Sona 需要麥克風來錄製聲音複製用的參考錄音。"
+      }
+    },
+    "dmg": {
+      "sign": true
+    },
+    "win": {
+      "target": "nsis",
+      "extraResources": [
+        {
+          "from": "build/uv/win-${arch}",
+          "to": "uv"
+        }
+      ]
+    },
+    "afterAllArtifactBuild": "scripts/notarize-dmg.js",
+    "toolsets": {
+      "nsis": "1.2.1"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Sona</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #121212; color: #fff; font: 14px -apple-system, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif; -webkit-app-region: drag; user-select: none; }
+  main { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+  h1 { margin: 0; font-size: 40px; font-weight: 700; letter-spacing: -0.02em; background: linear-gradient(135deg, #a78bfa, #f472b6); -webkit-background-clip: text; color: transparent; }
+  #text { color: #a1a1aa; }
+  #error { display: none; max-width: 520px; text-align: center; color: #fca5a5; white-space: pre-wrap; }
+  #actions { display: none; gap: 8px; -webkit-app-region: no-drag; }
+  button { background: #27272a; color: #fff; border: 0; border-radius: 999px; padding: 8px 18px; font: inherit; cursor: pointer; }
+  button:hover { background: #3f3f46; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sona</h1>
+  <div id="text"></div>
+  <div id="error"></div>
+  <div id="actions"><button id="retry">重試</button><button id="log">打開記錄檔</button></div>
+</main>
+<script>
+  const $ = (id) => document.getElementById(id)
+  sonaBoot.onStatus((s) => {
+    const failed = Boolean(s.error)
+    $('text').textContent = failed ? '啟動失敗' : (s.text || '')
+    $('error').textContent = s.error || ''
+    $('error').style.display = failed ? 'block' : 'none'
+    $('actions').style.display = failed ? 'flex' : 'none'
+  })
+  $('retry').onclick = () => sonaBoot.retry()
+  $('log').onclick = () => sonaBoot.openLog()
+</script>
+</body>
+</html>
