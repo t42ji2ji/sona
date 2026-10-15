@@ -112,6 +112,10 @@ ipcMain.handle('sona:pickFile', async (_e, filters) => {
   const r = await dialog.showOpenDialog(win, { properties: ['openFile'], filters })
   return r.canceled ? null : r.filePaths[0]
 })
+ipcMain.handle('sona:pickFolder', async (_e, defaultPath) => {
+  const r = await dialog.showOpenDialog(win, { properties: ['openDirectory', 'createDirectory'], defaultPath })
+  return r.canceled ? null : r.filePaths[0]
+})
 ipcMain.handle('boot:status', () => lastStatus)
 ipcMain.handle('boot:retry', () => boot())
 ipcMain.handle('boot:openLog', () => logFile && shell.openPath(logFile))

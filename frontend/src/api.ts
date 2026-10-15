@@ -10,6 +10,7 @@ declare global {
       platform: string
       openExternal(url: string): Promise<void>
       pickFile?(filters?: unknown): Promise<string | null>
+      pickFolder?(defaultPath?: string): Promise<string | null>
     }
   }
 }

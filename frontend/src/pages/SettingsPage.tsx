@@ -16,6 +16,9 @@ export function SettingsPage() {
   const save = (patch: SettingsPatch) =>
     api.putSettings(patch).then((s) => { useApp.setState({ settings: s }); useApp.getState().notify(t('set.saved')) }, report)
   const saveDir = () => dir.trim() && dir !== settings?.music_dir && save({ music_dir: dir.trim() })
+  const pickDir = () => window.sona?.pickFolder?.(dir || settings?.music_dir).then((p) => {
+    if (p && p !== settings?.music_dir) { setDir(p); save({ music_dir: p }) }
+  })
   const saveKey = () => key.trim() && save({ fish_api_key: key.trim() }).then(() => setKey(''))
   const dirEnter = useEnter(saveDir)
   const keyEnter = useEnter(saveKey)
@@ -29,6 +32,7 @@ export function SettingsPage() {
         <label htmlFor="s-dir">{t('set.musicDir')}</label>
         <div className="setting-row">
           <input id="s-dir" className="input" value={dir} onChange={(e) => setDir(e.target.value)} {...dirEnter} />
+          {window.sona?.pickFolder && <button className="btn" onClick={pickDir}>{t('set.pickDir')}</button>}
           <button className="btn" disabled={!dir.trim() || dir === settings.music_dir} onClick={saveDir}>{t('set.save')}</button>
         </div>
       </div>

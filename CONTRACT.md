@@ -44,7 +44,7 @@
 
 ## Electron preload
 
-`window.sona = { apiBase: "http://127.0.0.1:<port>", token, platform /* process.platform：darwin｜win32 */, openExternal(url), pickFile(filters) /* 回傳路徑字串 */ }`。介面判斷平台一律看 `/system`，不看這裡的 platform。上傳檔案用 `<input type=file>`。後端 CORS 放行 `http://localhost:5173`、`null`（file://）、`app://`。
+`window.sona = { apiBase: "http://127.0.0.1:<port>", token, platform /* process.platform：darwin｜win32 */, openExternal(url), pickFile(filters) /* 回傳路徑字串 */, pickFolder(defaultPath) /* 選資料夾，取消回 null */ }`。介面判斷平台一律看 `/system`，不看這裡的 platform。上傳檔案用 `<input type=file>`。後端 CORS 放行 `http://localhost:5173`、`null`（file://）、`app://`。
 
 ## 後端啟動
 
