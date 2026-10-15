@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "本機 AI 音樂與聲音",
+  "license": "AGPL-3.0-or-later",
   "main": "electron/main.js",
   "scripts": {
     "dev": "node scripts/dev.mjs",
