@@ -8,7 +8,7 @@
 
 在自己的電腦上寫歌，也能用你自己的聲音說話。
 
-[官網](https://sona.dorara.app) · [English](README.md)
+[**下載 Mac 版**](https://github.com/t42ji2ji/sona/releases/latest/download/Sona.dmg) · [Windows 版](https://github.com/t42ji2ji/sona/releases/latest/download/Sona-Setup.exe) · [官網](https://sona.dorara.app) · [English](README.md)
 
 </div>
 
@@ -41,7 +41,7 @@ Sona 只列出你這台電腦能用的模型，不會讓你下載跑不動的版
 
 每個模型要幾 GB 的磁碟空間，聲音複製大約 3 GB。
 
-目前還沒有簽好名的安裝檔，想先用要自己從原始碼建置（見下方）。
+到 [Releases](https://github.com/t42ji2ji/sona/releases/latest) 下載 `Sona.dmg`，把 Sona 拖進「應用程式」。Windows 執行 `Sona-Setup.exe`；目前沒有程式碼簽章，Windows 可能會先跳警告。第一次打開時 Sona 會準備自己的 Python 執行環境，大約要一分鐘。
 
 ## 隱私
 

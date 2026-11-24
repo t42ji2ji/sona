@@ -8,7 +8,7 @@
 
 Make songs, and speak in your own voice, on your own computer.
 
-[Website](https://sona.dorara.app) · [中文](README.zh-TW.md)
+[**Download for Mac**](https://github.com/t42ji2ji/sona/releases/latest/download/Sona.dmg) · [Windows](https://github.com/t42ji2ji/sona/releases/latest/download/Sona-Setup.exe) · [Website](https://sona.dorara.app) · [中文](README.zh-TW.md)
 
 </div>
 
@@ -41,7 +41,7 @@ Sona shows only the models that fit your computer, so you won't be offered a ver
 
 Models take a few GB of disk each. Voice cloning needs about 3 GB.
 
-There is no signed download yet. To try it now, build it from source (below).
+Download `Sona.dmg` from [Releases](https://github.com/t42ji2ji/sona/releases/latest) and drag Sona into Applications. On Windows, run `Sona-Setup.exe`; it isn't code-signed yet, so Windows may warn before it runs. The first launch sets up Sona's own Python runtime, which takes a minute.
 
 ## Privacy
 

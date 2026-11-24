@@ -67,7 +67,8 @@
       }
     },
     "dmg": {
-      "sign": true
+      "sign": true,
+      "artifactName": "Sona.dmg"
     },
     "win": {
       "target": "nsis",
@@ -81,6 +82,9 @@
     "afterAllArtifactBuild": "scripts/notarize-dmg.js",
     "toolsets": {
       "nsis": "1.2.1"
+    },
+    "nsis": {
+      "artifactName": "Sona-Setup.exe"
     }
   }
 }
