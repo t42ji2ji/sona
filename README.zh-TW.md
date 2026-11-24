@@ -8,7 +8,7 @@
 
 在自己的電腦上寫歌，也能用你自己的聲音說話。
 
-[English](README.md)
+[官網](https://sona.dorara.app) · [English](README.md)
 
 </div>
 

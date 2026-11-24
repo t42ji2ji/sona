@@ -8,7 +8,7 @@
 
 Make songs, and speak in your own voice, on your own computer.
 
-[中文](README.zh-TW.md)
+[Website](https://sona.dorara.app) · [中文](README.zh-TW.md)
 
 </div>
 

@@ -1,0 +1,71 @@
+@font-face { font-family: "Geist"; src: url("assets/geist.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+:root {
+  --bg: #000; --surface: #0a0a0a; --line: #ffffff24; --text: #ededed; --muted: #a1a1a1; --rec: #ff5e63;
+  --sans: "Geist", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); color: var(--text); font: 17px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+body { margin: 0; }
+a { color: inherit; }
+img { display: block; max-width: 100%; height: auto; }
+html[data-lang="en"] [data-zh], html[data-lang="zh"] [data-en] { display: none !important; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+
+.top, main, .foot { width: min(1120px, 100% - 48px); margin: 0 auto; }
+.top { display: flex; align-items: center; justify-content: space-between; height: 72px; }
+.wordmark { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 20px; letter-spacing: -0.04em; text-decoration: none; }
+.top nav { display: flex; align-items: center; gap: 20px; font-size: 14px; }
+.top nav > a { color: var(--muted); text-decoration: none; }
+.top nav > a:hover { color: var(--text); }
+.lang { display: inline-flex; padding: 3px; gap: 2px; box-shadow: 0 0 0 1px var(--line); border-radius: 6px; }
+.lang button { font: inherit; font-size: 13px; color: var(--muted); background: none; border: 0; height: 26px; padding: 0 10px; border-radius: 4px; cursor: pointer; }
+.lang button:hover { color: var(--text); }
+html[data-lang="en"] [data-set-lang="en"], html[data-lang="zh"] [data-set-lang="zh"] { background: #ffffff1f; color: var(--text); }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+.hero { padding: 96px 0 56px; }
+.bars { display: flex; align-items: center; gap: 7px; height: 56px; margin-bottom: 32px; }
+.bars i { width: 8px; border-radius: 4px; background: var(--text); height: var(--h); animation: talk 1.6s ease-in-out infinite; animation-delay: var(--d); }
+.bars i:nth-child(1) { --h: 22px; --d: -.2s; }
+.bars i:nth-child(2) { --h: 40px; --d: -.6s; }
+.bars i:nth-child(3) { --h: 56px; --d: -1s; background: var(--rec); }
+.bars i:nth-child(4) { --h: 37px; --d: -.4s; }
+.bars i:nth-child(5) { --h: 19px; --d: -.8s; }
+@keyframes talk { 50% { transform: scaleY(.45); } }
+@media (prefers-reduced-motion: reduce) { .bars i { animation: none; } }
+h1 { font-size: clamp(44px, 7.4vw, 92px); line-height: 1.02; letter-spacing: -0.055em; font-weight: 600; margin: 0; }
+html[data-lang="zh"] h1 { letter-spacing: -0.02em; line-height: 1.15; }
+.sub { font-size: 21px; color: var(--muted); margin: 24px 0 0; max-width: 34em; }
+.cta { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 20px; margin-top: 36px; }
+.btn { display: inline-flex; align-items: center; height: 48px; padding: 0 22px; border-radius: 6px; background: var(--text); color: var(--bg); font-weight: 500; text-decoration: none; transition: background .15s; }
+.btn:hover { background: #cccccc; }
+
+.shot { margin: 0; border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 1px var(--line), 0 30px 80px #ffffff0d; background: var(--surface); }
+
+.features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; padding: 88px 0; border-bottom: 1px solid var(--line); }
+.features h2, .split h2 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 8px; }
+.features p { margin: 0; color: var(--muted); font-size: 15px; }
+
+.split { display: grid; grid-template-columns: 1fr 1.6fr; gap: 56px; align-items: center; padding: 88px 0; border-bottom: 1px solid var(--line); }
+.split h2 { font-size: 32px; letter-spacing: -0.04em; line-height: 1.15; }
+.split p { color: var(--muted); margin: 0; }
+
+.facts { padding: 64px 0 88px; }
+.facts dl { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; margin: 0; }
+.facts dt { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.facts dd { margin: 0; font-size: 15px; }
+
+.foot { display: flex; gap: 24px; padding: 32px 0 48px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+.foot a { text-decoration: none; }
+.foot a:hover { color: var(--text); }
+
+@media (max-width: 860px) {
+  .features, .facts dl { grid-template-columns: 1fr 1fr; }
+  .split { grid-template-columns: 1fr; gap: 32px; }
+  .hero { padding: 56px 0 40px; }
+}
+@media (max-width: 520px) {
+  .features, .facts dl { grid-template-columns: 1fr; }
+  .top nav > a { display: none; }
+}
