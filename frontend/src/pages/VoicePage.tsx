@@ -225,7 +225,7 @@ function NewVoice({ onCreated }: { onCreated: (v: Voice) => void }) {
 }
 
 /** MediaRecorder 給的是 webm/opus，後端只收 mp3/wav/flac/m4a，轉成 16-bit 單聲道 WAV */
-async function toWav(blob: Blob): Promise<Blob> {
+export async function toWav(blob: Blob): Promise<Blob> {
   const ctx = new AudioContext()
   const buf = await ctx.decodeAudioData(await blob.arrayBuffer())
   void ctx.close()

@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "test:api": "node --experimental-strip-types test/api.test.ts"
+    "test:api": "node --experimental-strip-types test/api.test.ts",
+    "test:unit": "node --experimental-strip-types --test test/onboard.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
