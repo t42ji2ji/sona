@@ -5,7 +5,7 @@ import { featureComponents, report, useApp } from '../store.ts'
 import type { Component, Feature } from '../types.ts'
 import { Progress } from '../components/JobCard.tsx'
 
-const FEATURES: Feature[] = ['song', 'instrumental', 'cover', 'stems', 'voice_local']
+const FEATURES: Feature[] = ['song', 'instrumental', 'cover', 'stems', 'voice_local', 'voice_hq']
 
 function missingOf(comps: Component[], fs: Feature[]) {
   const map = new Map<string, Component>()
@@ -17,7 +17,7 @@ export function Wizard() {
   const t = useT()
   const system = useApp((s) => s.system)
   const comps = Object.values(useApp((s) => s.components))
-  const [picked, setPicked] = useState<Set<Feature>>(() => new Set(FEATURES.filter((f) => system?.capabilities[f].available)))
+  const [picked, setPicked] = useState<Set<Feature>>(() => new Set(FEATURES.filter((f) => f !== 'voice_hq' && system?.capabilities[f].available)))
   const [started, setStarted] = useState(false)
   if (!system) return null
 

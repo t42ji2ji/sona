@@ -57,7 +57,7 @@ def test_system(api):
     s = api.get("/system").json()
     assert s["platform"] in ("mac", "windows", "linux")
     assert s["accelerator"]["kind"] in ("mps", "cuda", "cpu")
-    assert set(s["capabilities"]) == {"song", "instrumental", "cover", "stems", "voice_local", "voice_api"}
+    assert set(s["capabilities"]) == {"song", "instrumental", "cover", "stems", "voice_local", "voice_hq", "voice_api"}
     assert s["music_dir"]
 
 
@@ -68,7 +68,7 @@ def test_components_listed_ready(api):
     ids = {c["id"] for c in comps}
     assert {"env:yue2", "env:yue2-mlx", "env:demucs", "env:voice-mlx", "model:yue2-3b", "model:yue2-vae", "model:yue2-mlx",
             "model:sheetsage2",
-            "model:htdemucs", "model:htdemucs-ft", "model:drama3-mlx", "model:qwen3-asr"} == ids
+            "model:htdemucs", "model:htdemucs-ft", "model:drama3-mlx", "model:qwen3-tts", "model:qwen3-asr"} == ids
     for c in comps:
         assert c["state"] in ("ready", "unsupported")
         assert c["size_bytes"] > 0
@@ -173,6 +173,20 @@ def test_voice_local_transcribes_reference(api, tmp_path):
     assert api.get("/voices").json()[0]["transcript"] == "我們去公園"
 
 
+def test_voice_quality(api, tmp_path):
+    v = make_voice(api, tmp_path)
+    for q in ("fast", "high"):
+        check_track(api, wait_job(api, submit(api, "voice", voice_id=v["id"], text="嗨", backend="local", quality=q)["id"]), "voice")
+    r = api.post("/jobs", json={"type": "voice", "params": {"voice_id": v["id"], "text": "嗨", "backend": "local", "quality": "max"}})
+    assert r.status_code == 400 and r.json()["error"]["code"] == "invalid_params"
+
+
+def test_polish(api):
+    assert api.post("/polish", json={"text": "今天好累"}).json() == {"text": "今天好累！", "tool": "claude"}
+    assert api.post("/polish", json={"text": " "}).status_code == 400
+    assert set(api.get("/system").json()["ai_tools"]) == {"claude", "codex"}
+
+
 def test_voice_api_requires_key(api, tmp_path):
     v = make_voice(api, tmp_path)
     api.put("/settings", json={"fish_api_key": ""})
@@ -251,7 +265,7 @@ def test_sse(api, server):
     events, done = read_events(server, lambda ev: any(
         k == "job" and d["id"] == job_id.get("id") and d["state"] == "done" for k, d in ev))
     time.sleep(0.5)
-    assert sum(1 for k, _ in events if k == "component") == 12   # snapshot on connect
+    assert sum(1 for k, _ in events if k == "component") == 13   # snapshot on connect
     job_id["id"] = submit(api, "song", style="pop", lyrics="hello")["id"]
     assert done.wait(20)
     job_events = [d for k, d in events if k == "job" and d["id"] == job_id["id"]]

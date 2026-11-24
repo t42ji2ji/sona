@@ -38,8 +38,8 @@ COMPONENTS = [
      "needed_for": ["stems", "cover"], "size_bytes": 650_000_000, "size_cuda": 5_500_000_000,
      "deps": ["demucs==4.0.1", "soundfile==0.13.1", *SHEETSAGE_PINS]},
     {"id": "env:voice-mlx", "kind": "env", "name": "本機聲音複製執行環境",
-     "description": "在 Apple Silicon 上跑 Fish Audio Drama 3 的 MLX 環境",
-     "needed_for": ["voice_local"], "size_bytes": 460_000_000,
+     "description": "在 Apple Silicon 上跑 Qwen3-TTS 與 Fish Audio Drama 3 的 MLX 環境",
+     "needed_for": ["voice_local", "voice_hq"], "size_bytes": 460_000_000,
      "deps": ["mlx-audio @ https://github.com/stickerdaniel/mlx-audio/archive/refs/heads/fish-drama3.zip",
               "soundfile==0.13.1"]},
     {"id": "model:yue2-3b", "kind": "model", "name": "YuE2-3B",
@@ -76,15 +76,23 @@ COMPONENTS = [
      "torch": {"f7e0c4bc-ba3fe64a.th": 84141271, "d12395a8-e57c48e6.th": 84141271,
                "92cfc3b6-ef3bcb9c.th": 84141271, "04573f0d-f3cf25b2.th": 84141271}},
     {"id": "model:drama3-mlx", "kind": "model", "name": "Fish Audio Drama 3（4-bit MLX）",
-     "description": "本機聲音複製模型，執行時約占 26GB 記憶體", "needed_for": ["voice_local"],
+     "description": "本機聲音複製高品質模式：情緒表現較好，執行時約占 26GB 記憶體", "needed_for": ["voice_hq"],
      "hf": [("mlx-community/fish-audio-drama-3-4bit", {
          "codec.safetensors": 1572080341, "model-00001.safetensors": 4354661374,
          "model-00002.safetensors": 4360386773, "model-00003.safetensors": 4304379853,
          "model-00004.safetensors": 4407528323, "model-00005.safetensors": 4425623733,
          "model-00006.safetensors": 335374378, "tokenizer.json": 20791070, "config.json": 53444,
          "tokenizer_config.json": 103580, "special_tokens_map.json": 102779, "chat_template.jinja": 7756})]},
+    {"id": "model:qwen3-tts", "kind": "model", "name": "Qwen3-TTS 1.7B（8-bit MLX）",
+     "description": "本機聲音複製（預設）：約 3GB 記憶體，接近即時", "needed_for": ["voice_local"],
+     "hf": [("mlx-community/Qwen3-TTS-12Hz-1.7B-Base-8bit", {
+         "model.safetensors": 2417320525, "model.safetensors.index.json": 78070, "config.json": 5522,
+         "generation_config.json": 245, "preprocessor_config.json": 127, "tokenizer_config.json": 7344,
+         "vocab.json": 2776833, "merges.txt": 1671839, "speech_tokenizer/model.safetensors": 682293092,
+         "speech_tokenizer/config.json": 2336, "speech_tokenizer/configuration.json": 76,
+         "speech_tokenizer/preprocessor_config.json": 234})]},
     {"id": "model:qwen3-asr", "kind": "model", "name": "Qwen3-ASR-0.6B（8-bit MLX）",
-     "description": "本機聲音複製用：自動把參考錄音轉成逐字稿", "needed_for": ["voice_local"],
+     "description": "本機聲音複製用：自動把參考錄音轉成逐字稿", "needed_for": ["voice_local", "voice_hq"],
      "hf": [("mlx-community/Qwen3-ASR-0.6B-8bit", {
          "model.safetensors": 1006229426, "model.safetensors.index.json": 71815, "config.json": 7187,
          "generation_config.json": 142, "chat_template.json": 1161, "preprocessor_config.json": 330,
@@ -99,7 +107,8 @@ FEATURE_COMPONENTS = {
     "instrumental": YUE2,
     "cover": [*YUE2, "env:demucs", "model:sheetsage2"],
     "stems": ["env:demucs", "model:htdemucs"],
-    "voice_local": ["env:voice-mlx", "model:drama3-mlx", "model:qwen3-asr"],
+    "voice_local": ["env:voice-mlx", "model:qwen3-tts", "model:qwen3-asr"],
+    "voice_hq": ["env:voice-mlx", "model:drama3-mlx", "model:qwen3-asr"],
 }
 
 _lock = threading.Lock()
@@ -120,7 +129,9 @@ def size_of(c: dict) -> int:
 
 
 def supported(c: dict) -> bool:
-    if c["id"] in ("env:voice-mlx", "model:drama3-mlx", "model:qwen3-asr"):
+    if c["id"] == "model:drama3-mlx":
+        return config.capabilities()["voice_hq"]["available"]
+    if c["id"] in ("env:voice-mlx", "model:qwen3-tts", "model:qwen3-asr"):
         return config.capabilities()["voice_local"]["available"]
     if c["id"] in MLX_YUE2 + TORCH_YUE2:
         return c["id"] in YUE2

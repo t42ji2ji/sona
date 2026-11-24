@@ -6,8 +6,9 @@
         one real YuE2 generation (~12 GB, minutes)
     uv run --project backend python -m sona_backend.smoke cover AUDIO [--instrumental] [--lyrics TEXT]
         SheetSage2 transcription + YuE2 generation
-    uv run --project backend python -m sona_backend.smoke voice --ref WAV --ref-text TEXT [--text TEXT]
-        one real Drama 3 local generation (~26 GB peak)
+    uv run --project backend python -m sona_backend.smoke voice --ref WAV [--ref-text TEXT] [--text TEXT] [--high]
+        one real local voice generation: Qwen3-TTS (~3 GB), or Drama 3 with --high (~26 GB peak);
+        without --ref-text the reference is transcribed first
 """
 import argparse
 import json
@@ -92,6 +93,7 @@ def main():
     cli.add_argument("command", choices=["doctor", "yue2", "cover", "voice"])
     cli.add_argument("audio", nargs="?", type=Path)
     cli.add_argument("--instrumental", action="store_true")
+    cli.add_argument("--high", action="store_true")
     cli.add_argument("--lyrics", default="[Verse]\n晚風吹過街角\n路燈一盞一盞亮起來\n\n[Chorus]\n我們慢慢走\n把今天唱完\n")
     cli.add_argument("--style", default="Mandarin, female vocal, warm acoustic pop, 90 BPM, piano, soft drums")
     cli.add_argument("--ref", type=Path)
@@ -113,12 +115,13 @@ def main():
         run("yue2", {"job": "cover", "abc": abc, "out": str(args.out), "params": {
             "style": args.style, "lyrics": args.lyrics, "instrumental": args.instrumental}})
     else:
-        if not args.ref or not args.ref_text:
-            cli.error("voice 需要 --ref 參考錄音和 --ref-text 逐字稿")
+        if not args.ref:
+            cli.error("voice 需要 --ref 參考錄音")
         wav = args.out / "ref.wav"
         args.out.mkdir(parents=True, exist_ok=True)
         audio.convert(args.ref, wav, max_seconds=30, mono=True, rate=44100)
-        run("voice-mlx", {"text": args.text, "ref_audio": str(wav), "ref_text": args.ref_text, "out": str(args.out)})
+        run("voice-mlx", {"text": args.text, "ref_audio": str(wav), "ref_text": args.ref_text or "", "out": str(args.out),
+                          "model": "drama3" if args.high else "qwen3"})
         manager.kill()
     return 0
 

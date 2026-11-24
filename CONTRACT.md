@@ -24,7 +24,7 @@
 - Electron 在第一次啟動時用內附的 `uv` 執行 `uv run --project <backend>` 啟動後端（uv 會自動下載 Python 與核心依賴）。
 - 後端核心 venv 只裝 FastAPI、huggingface_hub、PyAV（mp3 編解碼，內含 FFmpeg）這類輕量依賴。**每個引擎一個獨立 venv**（依賴互相衝突：yue2-infer 釘死 torch 2.10／transformers 4.57.6），由後端用 `uv` 在資料目錄下建立：`envs/yue2`（yue2-infer 不在 PyPI，裝 GitHub release `yue2-v0.1.6` wheel）、`envs/demucs`（Demucs＋SheetSage2，兩者都要 torch 2.8，所以翻唱的轉譜也在這個 env）、`envs/voice-mlx`。
 - 引擎以**子行程**執行（engine venv 的 python 跑 `backend/sona_backend/workers/<engine>.py`），stdout 每行一個 JSON 事件回報進度。子行程結束即釋放記憶體。
-- **同一時間只有一個引擎常駐**。切換引擎前先結束前一個 worker。voice worker 可常駐（閒置 5 分鐘自動結束）以免每句重載 22GB。
+- **同一時間只有一個引擎常駐**。切換引擎前先結束前一個 worker。voice worker 可常駐（閒置 5 分鐘自動結束）以免每句重載模型；一次只載一個語音模型，換模型先釋放（Drama 3 約 22GB）。
 - 任務佇列單一併發，依序執行。
 - 模型權重用 huggingface_hub 預設 cache（`HF_HOME`，未設定即 `~/.cache/huggingface`），已下載的直接沿用。
 - 開發與測試用 `SONA_FAKE_ENGINES=1`：所有引擎改成假 worker，幾秒內產生正弦波音檔並照真實階段回報進度。模型／環境狀態也要能假裝成 ready。
@@ -69,7 +69,8 @@ SONA_READY {"port": 51234, "token": "<random>"}
   ```ts
   { platform: "mac"|"windows"|"linux", arch: string, ram_gb: number,
     accelerator: { kind: "mps"|"cuda"|"cpu", name: string, vram_gb: number|null },
-    capabilities: { song: Cap, instrumental: Cap, cover: Cap, stems: Cap, voice_local: Cap, voice_api: Cap },
+    capabilities: { song: Cap, instrumental: Cap, cover: Cap, stems: Cap, voice_local: Cap, voice_hq: Cap, voice_api: Cap },
+    ai_tools: { claude: boolean, codex: boolean },   // 本機有沒有 Claude Code／Codex CLI（修飾語氣用）
     music_dir: string }
   type Cap = { available: boolean, reason?: string, speed_hint?: string }  // 例 speed_hint: "約每分鐘生成 10 秒音樂"
   ```
@@ -80,12 +81,12 @@ SONA_READY {"port": 51234, "token": "<random>"}
 
 - `GET /components` → `Component[]`
   ```ts
-  { id: string,                       // "env:yue2" | "env:demucs" | "env:voice-mlx" | "model:yue2-3b" | "model:yue2-vae" | "model:sheetsage2" | "model:htdemucs" | "model:htdemucs-ft" | "model:drama3-mlx"
+  { id: string,                       // "env:yue2" | "env:demucs" | "env:voice-mlx" | "model:yue2-3b" | "model:yue2-vae" | "model:sheetsage2" | "model:htdemucs" | "model:htdemucs-ft" | "model:drama3-mlx" | "model:qwen3-tts" | "model:qwen3-asr"
     kind: "env"|"model", name: string, description: string,
     size_bytes: number, done_bytes: number,
     state: "missing"|"queued"|"installing"|"ready"|"error"|"unsupported",
     error?: string,
-    needed_for: ("song"|"instrumental"|"cover"|"stems"|"voice_local")[] }
+    needed_for: ("song"|"instrumental"|"cover"|"stems"|"voice_local"|"voice_hq")[] }
   // env:demucs 的 needed_for 含 stems 與 cover；model:sheetsage2 同時包含 MERT-v2-FullSong，刪除時兩個 repo 一起刪
   ```
 - `POST /components/{id}/install`（重複呼叫無害）、`POST /components/{id}/cancel`、`DELETE /components/{id}`（刪模型或 venv）
@@ -101,7 +102,7 @@ SONA_READY {"port": 51234, "token": "<random>"}
   instrumental: { title?: string, style: string, seed?: number }
   cover:        { title?: string, upload_id: string, style: string, lyrics?: string, instrumental?: boolean, seed?: number }
   stems:        { title?: string, upload_id?: string, track_id?: string, model?: "htdemucs"|"htdemucs_ft" }
-  voice:        { voice_id: string, text: string, backend?: "local"|"api" }
+  voice:        { voice_id: string, text: string, backend?: "local"|"api", quality?: "fast"|"high" }   // 本機 fast＝Qwen3-TTS（預設，voice_local，16GB+），high＝Drama 3（voice_hq，32GB+）
 
   type Job = { id: string, type: JobType, params: object, title: string,
     state: "queued"|"running"|"done"|"failed"|"cancelled",
@@ -133,6 +134,7 @@ SONA_READY {"port": 51234, "token": "<random>"}
 ### 上傳與聲音
 
 - `POST /uploads` multipart `file` → `{upload_id, filename, duration_s}`（mp3/wav/flac/m4a）
+- `POST /polish` `{text, tool?: "claude"|"codex"}` → `{text, tool}`：用使用者本機的 Claude Code／Codex CLI 把要念的文字改得更有語氣（不需 API key）；都沒裝 → 400 `no_ai_cli`
 - `GET /voices` → `Voice[]`，`POST /voices` multipart `name, file`（`transcript` 選填；留空時第一次生成語音會自動辨識參考錄音並存回），`DELETE /voices/{id}`，`GET /voices/{id}/sample`
   ```ts
   type Voice = { id: string, name: string, transcript: string, duration_s: number, created_at: string, sample_url: string }

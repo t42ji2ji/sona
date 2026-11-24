@@ -129,6 +129,10 @@ def validate(type: str, params: dict) -> dict:
             raise ApiError(400, "invalid_params", "backend 只能是 local 或 api。")
         if p["backend"] == "local" and not config.capabilities()["voice_local"]["available"]:
             raise ApiError(400, "unsupported", config.capabilities()["voice_local"]["reason"])
+        if p.setdefault("quality", "fast") not in ("fast", "high"):
+            raise ApiError(400, "invalid_params", "quality 只能是 fast 或 high。")
+        if p["backend"] == "local" and p["quality"] == "high" and not config.capabilities()["voice_hq"]["available"]:
+            raise ApiError(400, "unsupported", config.capabilities()["voice_hq"]["reason"])
         if p["backend"] == "api" and not settings.load()["fish_api_key"]:
             raise ApiError(400, "missing_api_key", "還沒填 Fish Audio API key，請先到設定填寫。")
     else:
@@ -248,7 +252,8 @@ def _execute(job: dict, folder: Path) -> dict:
     voice = db.get("voices", p["voice_id"])
     if p["backend"] == "local" or config.FAKE:
         result = _run_engine(job, "voice-mlx", {"text": p["text"], "ref_audio": voice["path"],
-                                                "ref_text": voice["transcript"], "out": str(folder)})
+                                                "ref_text": voice["transcript"], "out": str(folder),
+                                                "model": "drama3" if p.get("quality") == "high" else "qwen3"})
         if not voice["transcript"] and result.get("ref_text"):
             db.put("voices", {**voice, "transcript": _traditional(result["ref_text"])})
     else:
@@ -285,7 +290,8 @@ def _run(job: dict):
     folder = None
     try:
         missing = [] if job["type"] == "voice" and job["params"]["backend"] == "api" else \
-            components.missing_for(job["type"] if job["type"] != "voice" else "voice_local")
+            components.missing_for(job["type"] if job["type"] != "voice" else
+                                   "voice_hq" if job["params"].get("quality") == "high" else "voice_local")
         if job["type"] == "stems" and job["params"]["model"] == "htdemucs_ft":
             missing = [m for m in missing if m != components.BY_ID["model:htdemucs"]["name"]]
             if not components.ready("model:htdemucs-ft"):

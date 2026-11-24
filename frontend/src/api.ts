@@ -98,6 +98,7 @@ export const api = {
   upload: (file: Blob, filename?: string) => req<Upload>('POST', '/uploads', form({ file }, filename)),
 
   voices: () => req<Voice[]>('GET', '/voices'),
+  polish: (text: string) => req<{ text: string; tool: 'claude' | 'codex' }>('POST', '/polish', { text }),
   createVoice: (name: string, file: Blob, filename?: string) =>
     req<Voice>('POST', '/voices', form({ name, file }, filename)),
   deleteVoice: (id: string) => req<unknown>('DELETE', `/voices/${id}`),

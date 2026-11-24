@@ -1,7 +1,7 @@
 // 完全照 CONTRACT.md
 
 export type Cap = { available: boolean; reason?: string; speed_hint?: string }
-export type Feature = 'song' | 'instrumental' | 'cover' | 'stems' | 'voice_local'
+export type Feature = 'song' | 'instrumental' | 'cover' | 'stems' | 'voice_local' | 'voice_hq'
 
 export type System = {
   platform: 'mac' | 'windows' | 'linux'
@@ -10,6 +10,7 @@ export type System = {
   accelerator: { kind: 'mps' | 'cuda' | 'cpu'; name: string; vram_gb: number | null }
   capabilities: Record<Feature | 'voice_api', Cap>
   music_dir: string
+  ai_tools: { claude: boolean; codex: boolean }
 }
 
 export type Component = {
@@ -33,7 +34,7 @@ export type JobParams = {
   instrumental: { title?: string; style: string; seed?: number; quality?: Quality }
   cover: { title?: string; upload_id: string; style: string; lyrics?: string; instrumental?: boolean; seed?: number; quality?: Quality }
   stems: { title?: string; upload_id?: string; track_id?: string; model?: 'htdemucs' | 'htdemucs_ft' }
-  voice: { voice_id: string; text: string; backend?: 'local' | 'api' }
+  voice: { voice_id: string; text: string; backend?: 'local' | 'api'; quality?: Quality }
 }
 
 export type Job = {

@@ -110,12 +110,15 @@ def capabilities() -> dict:
         yue = {"available": True}
     else:
         yue = {"available": True, "speed_hint": "沒有可用的 GPU，只能用 CPU，會非常慢"}
-    local_ok = kind == "mps" and info["ram_gb"] >= 32
+    local_ok = kind == "mps" and info["ram_gb"] >= 16
+    hq_ok = kind == "mps" and info["ram_gb"] >= 32
     return {
         "song": yue, "instrumental": yue, "cover": yue,
         "stems": {"available": True} if kind != "cpu" else {"available": True, "speed_hint": "沒有可用的 GPU，會比較慢"},
         "voice_local": {"available": True} if local_ok else
-        {"available": False, "reason": "本機聲音複製只支援記憶體 32GB 以上的 Apple Silicon Mac，請改用 Fish Audio API。"},
+        {"available": False, "reason": "本機聲音複製只支援記憶體 16GB 以上的 Apple Silicon Mac，請改用 Fish Audio API。"},
+        "voice_hq": {"available": True} if hq_ok else
+        {"available": False, "reason": "高品質模式要 32GB 以上記憶體的 Apple Silicon Mac。"},
         "voice_api": {"available": True},
     }
 

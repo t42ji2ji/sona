@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from starlette.exceptions import HTTPException
 
-from . import audio, components, config, db, events, jobs, settings
+from . import audio, components, config, db, events, jobs, polish, settings
 from .engine import manager
 from .errors import ApiError
 
@@ -70,7 +70,8 @@ def create_app(token: str) -> FastAPI:
 
     @app.get("/api/system")
     def system():
-        return {**config.system(), "capabilities": config.capabilities(), "music_dir": settings.load()["music_dir"]}
+        return {**config.system(), "capabilities": config.capabilities(), "music_dir": settings.load()["music_dir"],
+                "ai_tools": polish.tools()}
 
     # ---- components ------------------------------------------------------------
 
@@ -253,6 +254,10 @@ def create_app(token: str) -> FastAPI:
         Path(voice_or_404(id)["path"]).unlink(missing_ok=True)
         db.delete("voices", id)
         return {"ok": True}
+
+    @app.post("/api/polish")
+    def polish_text(body: dict):
+        return polish.polish(str(body.get("text") or ""), body.get("tool"))
 
     @app.get("/api/voices/{id}/sample")
     def voice_sample(id: str):

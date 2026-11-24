@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { api, mediaUrl } from '../api.ts'
 import { fmtDuration, useT } from '../i18n.ts'
 import { report, useApp } from '../store.ts'
-import type { Voice } from '../types.ts'
+import type { Quality, Voice } from '../types.ts'
 import { FeatureGate } from '../components/FeatureGate.tsx'
 import { Icon } from '../components/Icon.tsx'
 import { useEnter } from '../ime.ts'
@@ -16,10 +16,16 @@ export function VoicePage() {
   const [selected, setSelected] = useState<string | null>(null)
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+  const [quality, setQuality] = useState<Quality>('fast')
+  const [polishing, setPolishing] = useState(false)
+  const [proposal, setProposal] = useState<{ from: string; to: string } | null>(null)
+  const textarea = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => { api.voices().then((v) => { setVoices(v); setSelected((s) => s ?? v[0]?.id ?? null) }, report) }, [])
 
   const localOk = !!system?.capabilities.voice_local.available
+  const hqOk = !!system?.capabilities.voice_hq?.available
+  const aiTool = system?.ai_tools.claude ? 'Claude Code' : system?.ai_tools.codex ? 'Codex' : null
   const backend = localOk ? settings?.voice_backend ?? 'api' : 'api'
   const setBackend = (b: 'local' | 'api') =>
     api.putSettings({ voice_backend: b }).then((s) => useApp.setState({ settings: s }), report)
@@ -28,17 +34,52 @@ export function VoicePage() {
     if (!selected || !text.trim() || sending) return
     setSending(true)
     try {
-      const job = await api.createJob('voice', { voice_id: selected, text, backend })
+      const job = await api.createJob('voice', { voice_id: selected, text, backend, quality: backend === 'local' ? quality : undefined })
       useApp.setState((s) => ({ jobs: { ...s.jobs, [job.id]: job } }))
     } catch (e) { report(e) } finally { setSending(false) }
+  }
+
+  const polish = async () => {
+    if (!text.trim() || polishing) return
+    setPolishing(true)
+    try {
+      const from = text
+      setProposal({ from, to: (await api.polish(from)).text })
+    } catch (e) { report(e) } finally { setPolishing(false) }
+  }
+
+  /** 走 insertText 讓 ⌘Z 能還原 */
+  const apply = () => {
+    const el = textarea.current
+    if (!proposal || !el) return
+    el.focus()
+    el.select()
+    if (!document.execCommand('insertText', false, proposal.to)) setText(proposal.to)
+    setProposal(null)
   }
 
   const form = (
     <>
       <label className="field">
         <span>{t('voice.say')}</span>
-        <textarea className="input" rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder={t('voice.sayPh')} />
+        <textarea ref={textarea} className="input" rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder={t('voice.sayPh')} />
       </label>
+      <div className="polish-row">
+        <button className="btn ghost small" disabled={!text.trim() || polishing || !aiTool} onClick={polish}
+          title={aiTool ? t('voice.polishTip', { t: aiTool }) : t('voice.noAi')}>
+          <Icon name="create" size={14} /> {polishing ? t('voice.polishing') : t('voice.polish')}
+        </button>
+      </div>
+      {proposal && (
+        <div className="proposal">
+          <del>{proposal.from}</del>
+          <p>{proposal.to}</p>
+          <div className="proposal-actions">
+            <button className="btn small" onClick={apply}>{t('voice.apply')}</button>
+            <button className="btn ghost small" onClick={() => setProposal(null)}>{t('voice.ignore')}</button>
+          </div>
+        </div>
+      )}
       <button className="cta" disabled={!selected || !text.trim() || sending} onClick={generate}>
         {voices.length ? t('voice.go') : t('voice.none')}
       </button>
@@ -71,8 +112,17 @@ export function VoicePage() {
                 }} />
             ))}
           </div>
+          {backend === 'local' && hqOk && (
+            <div className="field">
+              <span>{t('voice.quality')}</span>
+              <div className="segmented small">
+                <button className={quality === 'fast' ? 'on' : ''} onClick={() => setQuality('fast')}>{t('voice.fast')}</button>
+                <button className={quality === 'high' ? 'on' : ''} onClick={() => setQuality('high')} title={t('voice.highTip')}>{t('voice.high')}</button>
+              </div>
+            </div>
+          )}
           {backend === 'local' ? (
-            <FeatureGate feature="voice_local">{form}</FeatureGate>
+            <FeatureGate feature={quality === 'high' && hqOk ? 'voice_hq' : 'voice_local'}>{form}</FeatureGate>
           ) : settings?.fish_api_key_set ? form : (
             <div className="gate">
               <span>{t('voice.needKey')}</span>

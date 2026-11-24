@@ -70,7 +70,7 @@ export async function boot() {
   }
   const wizardDone = (() => { try { return localStorage.getItem('sona.wizardDone') === '1' } catch { return false } })()
   const comps = Object.values(useApp.getState().components)
-  const anyReady = (['song', 'instrumental', 'cover', 'stems', 'voice_local'] as Feature[]).some((f) => featureReady(comps, f))
+  const anyReady = (['song', 'instrumental', 'cover', 'stems', 'voice_local', 'voice_hq'] as Feature[]).some((f) => featureReady(comps, f))
   useApp.setState({ booted: true, page: wizardDone || anyReady ? { name: 'create' } : { name: 'wizard' } })
 
   subscribe({
