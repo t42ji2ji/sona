@@ -30,6 +30,14 @@ def public() -> dict:
             "fish_api_key_set": bool(s["fish_api_key"]), "language": s["language"]}
 
 
+def mark(key: str):
+    """Persist an internal one-time flag (not exposed to clients)."""
+    with _lock:
+        s = load()
+        s[key] = True
+        _path().write_text(json.dumps(s, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def update(changes: dict) -> dict:
     with _lock:
         s = load()

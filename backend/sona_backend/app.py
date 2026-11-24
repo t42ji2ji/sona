@@ -21,6 +21,23 @@ from .errors import ApiError
 
 AUDIO_TYPES = {".mp3", ".wav", ".flac", ".m4a"}
 VOICE_MAX_SECONDS = 30
+SAMPLE_VOICE = Path(__file__).parent / "assets" / "sample-voice.mp3"
+
+
+def seed_sample_voice():
+    """First launch only: give an empty voice list one sample to try. Deleting it is final."""
+    if settings.load().get("sample_voice_seeded"):
+        return
+    if not db.all("voices"):
+        id = jobs.new_id()
+        folder = config.data_dir() / "voices"
+        folder.mkdir(parents=True, exist_ok=True)
+        wav = folder / f"{id}.wav"
+        seconds = audio.convert(SAMPLE_VOICE, wav, max_seconds=VOICE_MAX_SECONDS, mono=True, rate=44100)
+        name = "範例聲音" if settings.load()["language"] == "zh-TW" else "Sample voice"
+        db.put("voices", {"id": id, "name": name, "transcript": "", "duration_s": round(seconds, 2),
+                          "created_at": jobs.now(), "path": str(wav)})
+    settings.mark("sample_voice_seeded")
 
 
 def create_app(token: str) -> FastAPI:
@@ -28,6 +45,7 @@ def create_app(token: str) -> FastAPI:
     async def lifespan(_app):
         events.bind(asyncio.get_running_loop())
         db.connect()
+        seed_sample_voice()
         components.start()
         jobs.start()
         yield

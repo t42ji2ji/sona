@@ -313,6 +313,12 @@ def test_upload_formats(api, tmp_path):
     assert r.status_code == 400 and r.json()["error"]["code"] == "unreadable_audio"
 
 
+def test_sample_voice_seeded_once(api):
+    sample = [v for v in api.get("/voices").json() if v["name"] in ("範例聲音", "Sample voice")]
+    assert len(sample) == 1 and 15 < sample[0]["duration_s"] <= 30
+    assert api.get(f"/voices/{sample[0]['id']}/sample").status_code == 200
+
+
 def test_voices(api, tmp_path):
     v = make_voice(api, tmp_path, seconds=40)
     assert v["duration_s"] == 30 and v["name"] == "我" and v["transcript"] == "你好"
