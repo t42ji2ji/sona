@@ -22,7 +22,7 @@ export function TrackPage({ id }: { id: string }) {
 
   return (
     <div className="track-page scroll">
-      <header className="hero" style={{ '--h': track.hue } as React.CSSProperties}>
+      <header className="hero">
         <Cover id={track.id} hue={track.hue} className="hero-cover" />
         <div className="hero-info">
           <span className="eyebrow">{t(`kind.${track.kind}`)}</span>
@@ -121,7 +121,7 @@ function Mixer({ track }: { track: Track }) {
       {stems.map((s, i) => {
         const silent = muted.has(s.name) || (solo.size > 0 && !solo.has(s.name))
         return (
-          <div key={s.name} className={`stem ${silent ? 'silent' : ''}`} style={{ '--h': track.hue + i * 40 } as React.CSSProperties}>
+          <div key={s.name} className={`stem ${silent ? 'silent' : ''}`}>
             <audio ref={(a) => { if (a) els.current[s.name] = a; else delete els.current[s.name] }} src={mediaUrl(s.url)} preload="auto"
               onTimeUpdate={i === 0 ? (e) => setTime(e.currentTarget.currentTime) : undefined}
               onLoadedMetadata={i === 0 ? (e) => setDur(e.currentTarget.duration) : undefined}

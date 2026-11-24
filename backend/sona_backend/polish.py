@@ -1,6 +1,7 @@
 """Rewrites voice text with more spoken tone, using the user's own Claude Code or Codex CLI (no API key)."""
 from __future__ import annotations
 
+import getpass
 import os
 import shutil
 import subprocess
@@ -44,10 +45,13 @@ def polish(text: str, tool: str | None) -> dict:
     if tool not in available:
         raise ApiError(400, "no_ai_cli", "找不到本機的 Claude Code 或 Codex，請先安裝並登入其中一個。")
     env = {**os.environ, "PATH": os.pathsep.join([os.environ.get("PATH", ""), *map(str, EXTRA_PATH)])}
+    env.setdefault("USER", getpass.getuser())     # claude reads its keychain login by user name
+    env.setdefault("LOGNAME", env["USER"])
     with tempfile.TemporaryDirectory() as tmp:
         if tool == "claude":
             cmd = [_which("claude"), "-p", "--model", "sonnet", "--tools", "", "--permission-mode", "default",
-                   "--output-format", "text", "--no-session-persistence"]
+                   "--output-format", "text", "--no-session-persistence",
+                   "--setting-sources", ""]   # skip the user's hooks, status line and plugins for this one-shot call
             out_file = None
         else:
             out_file = Path(tmp) / "out.txt"
@@ -58,7 +62,7 @@ def polish(text: str, tool: str | None) -> dict:
         except subprocess.TimeoutExpired:
             raise ApiError(504, "ai_timeout", "AI 超過兩分鐘沒有回應，請再試一次。") from None
         if r.returncode:
-            raise ApiError(502, "ai_failed", f"{tool} 執行失敗：{(r.stderr or r.stdout).strip()[-300:]}")
+            raise ApiError(502, "ai_failed", f"{tool} 執行失敗：{(r.stderr + r.stdout).strip()[-300:]}")
         result = (out_file.read_text() if out_file and out_file.is_file() else r.stdout).strip()
     if not result:
         raise ApiError(502, "ai_failed", f"{tool} 沒有回傳文字。")
