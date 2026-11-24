@@ -33,16 +33,6 @@
       },
       "start": 0,
       "seconds": 15
-    },
-    {
-      "id": "v4",
-      "file": "~/Downloads/voice samples/voice sample 4 片段.mp3",
-      "name": {
-        "en": "Voice 4",
-        "zh": "聲音 4"
-      },
-      "start": 0,
-      "seconds": 15
     }
   ],
   "lines": [

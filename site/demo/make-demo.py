@@ -2,6 +2,7 @@
 
   ./make-demo.sh voices.json            # writes ../assets/demo/ and ../assets/demo.js
   ./make-demo.sh voices.json --out DIR  # somewhere else, for a trial run
+  ./make-demo.sh voices.json --names    # only apply name/label/credit edits and removed voices; no regeneration
 
 voices.json lists the voices (a recording each), the lines every voice says, and the tone before/after.
 Each voice says every line, so visitors can mix and match. Runs locally with Qwen3-TTS (Sona's voice-mlx env).
@@ -51,11 +52,14 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("config", type=Path)
     ap.add_argument("--out", type=Path, help="default: site/assets")
+    ap.add_argument("--names", action="store_true", help="update names, labels and credit; drop voices no longer listed")
     a = ap.parse_args()
     cfg = json.loads(a.config.read_text())
     base = a.config.resolve().parent
     out = (a.out or Path(__file__).resolve().parent.parent / "assets").resolve()
     demo = out / "demo"
+    if a.names:
+        return update_names(cfg, out)
     shutil.rmtree(demo, ignore_errors=True)
     demo.mkdir(parents=True)
 
@@ -111,6 +115,22 @@ def main():
     shutil.rmtree(work, ignore_errors=True)
     (out / "demo.js").write_text("window.SONA_DEMO = " + json.dumps(manifest, ensure_ascii=False) + "\n")
     print(f"wrote {demo} and {out / 'demo.js'}", file=sys.stderr)
+
+
+def update_names(cfg, out):
+    js = out / "demo.js"
+    m = json.loads(js.read_text().split("=", 1)[1].strip().rstrip(";"))
+    keep = {v["id"]: v for v in cfg["voices"]}
+    for v in m["voices"]:
+        if v["id"] not in keep:
+            for f in (out / "demo").glob(f"{v['id']}-*.mp3"):
+                f.unlink()
+    m["voices"] = [{**v, "name": keep[v["id"]]["name"]} for v in m["voices"] if v["id"] in keep]
+    labels = {l["id"]: l for l in cfg["lines"]}
+    m["lines"] = [{**l, "label": labels[l["id"]].get("label")} for l in m["lines"] if l["id"] in labels]
+    m["credit"] = cfg.get("credit")
+    js.write_text("window.SONA_DEMO = " + json.dumps(m, ensure_ascii=False) + "\n")
+    print(f"updated {js}: " + ", ".join(v["id"] for v in m["voices"]), file=sys.stderr)
 
 
 if __name__ == "__main__":
