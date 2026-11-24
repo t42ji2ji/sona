@@ -231,9 +231,9 @@ def create_app(token: str) -> FastAPI:
         return [voice_view(v) for v in db.all("voices")]
 
     @app.post("/api/voices")
-    def create_voice(name: str = Form(...), transcript: str = Form(...), file: UploadFile = File(...)):
-        if not name.strip() or not transcript.strip():
-            raise ApiError(400, "invalid_params", "聲音名稱和逐字稿都要填。")
+    def create_voice(name: str = Form(...), transcript: str = Form(""), file: UploadFile = File(...)):
+        if not name.strip():
+            raise ApiError(400, "invalid_params", "聲音名稱要填。")
         id = jobs.new_id()
         path, seconds = store_audio(file, config.data_dir() / "voices", id, max_seconds=VOICE_MAX_SECONDS,
                                     mono=True, rate=44100)

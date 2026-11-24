@@ -64,6 +64,8 @@ def handle(request):
     abc = "X:1\nT:\nM:4/4\nL:1/8\nK:C\nV: Vocal\nCDEF GABc|\n" if engine == "yue2" else None
     if abc:
         (out / "score.abc").write_text(abc, encoding="utf-8")
+    if engine == "voice-mlx":
+        return {"duration_s": 3.0, "ref_text": request["ref_text"] or "我们去公园"}
     return {"score_abc": abc, "duration_s": 3.0}
 
 

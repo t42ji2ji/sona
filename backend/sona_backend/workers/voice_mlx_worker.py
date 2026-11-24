@@ -2,6 +2,7 @@
 
 Stays resident between requests (the model is ~22 GB to load) and exits after
 5 idle minutes. Request: {"text", "ref_audio": wav path, "ref_text", "out"} -> out/audio.wav
+An empty ref_text is transcribed with Qwen3-ASR first and returned as result["ref_text"].
 """
 import os
 import queue
@@ -13,7 +14,20 @@ import common
 from common import emit, progress, stage
 
 MODEL = "mlx-community/fish-audio-drama-3-4bit"
+ASR_MODEL = "mlx-community/Qwen3-ASR-0.6B-8bit"
 IDLE_SECONDS = 300
+
+
+def transcribe(path):
+    import mlx.core as mx
+    from mlx_audio.stt import load
+
+    stage("辨識參考錄音", 0.0)
+    asr = load(ASR_MODEL)
+    text = asr.generate(path).text.strip()
+    del asr
+    mx.clear_cache()
+    return text
 
 
 def generate(model, request):
@@ -52,13 +66,15 @@ def main():
         except queue.Empty:
             return
         try:
+            ref_text = request["ref_text"] or transcribe(request["ref_audio"])   # first: freed before a cold Drama 3 load
+            request = {**request, "ref_text": ref_text}
             if model is None:
                 emit("engine", state="loading")
                 stage("載入模型", 0.0)
                 from mlx_audio.tts.utils import load_model
                 model = load_model(MODEL)
                 emit("engine", state="ready")
-            emit("result", **generate(model, request))
+            emit("result", **generate(model, request), ref_text=ref_text)
         except Exception as exc:  # noqa: BLE001
             import traceback
             traceback.print_exc()

@@ -133,7 +133,7 @@ SONA_READY {"port": 51234, "token": "<random>"}
 ### 上傳與聲音
 
 - `POST /uploads` multipart `file` → `{upload_id, filename, duration_s}`（mp3/wav/flac/m4a）
-- `GET /voices` → `Voice[]`，`POST /voices` multipart `name, transcript, file`，`DELETE /voices/{id}`，`GET /voices/{id}/sample`
+- `GET /voices` → `Voice[]`，`POST /voices` multipart `name, file`（`transcript` 選填；留空時第一次生成語音會自動辨識參考錄音並存回），`DELETE /voices/{id}`，`GET /voices/{id}/sample`
   ```ts
   type Voice = { id: string, name: string, transcript: string, duration_s: number, created_at: string, sample_url: string }
   ```

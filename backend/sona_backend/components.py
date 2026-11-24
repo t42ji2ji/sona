@@ -83,6 +83,12 @@ COMPONENTS = [
          "model-00004.safetensors": 4407528323, "model-00005.safetensors": 4425623733,
          "model-00006.safetensors": 335374378, "tokenizer.json": 20791070, "config.json": 53444,
          "tokenizer_config.json": 103580, "special_tokens_map.json": 102779, "chat_template.jinja": 7756})]},
+    {"id": "model:qwen3-asr", "kind": "model", "name": "Qwen3-ASR-0.6B（8-bit MLX）",
+     "description": "本機聲音複製用：自動把參考錄音轉成逐字稿", "needed_for": ["voice_local"],
+     "hf": [("mlx-community/Qwen3-ASR-0.6B-8bit", {
+         "model.safetensors": 1006229426, "model.safetensors.index.json": 71815, "config.json": 7187,
+         "generation_config.json": 142, "chat_template.json": 1161, "preprocessor_config.json": 330,
+         "tokenizer_config.json": 12487, "vocab.json": 2776833, "merges.txt": 1671853})]},
 ]
 BY_ID = {c["id"]: c for c in COMPONENTS}
 MLX_YUE2 = ["env:yue2-mlx", "model:yue2-mlx"]
@@ -93,7 +99,7 @@ FEATURE_COMPONENTS = {
     "instrumental": YUE2,
     "cover": [*YUE2, "env:demucs", "model:sheetsage2"],
     "stems": ["env:demucs", "model:htdemucs"],
-    "voice_local": ["env:voice-mlx", "model:drama3-mlx"],
+    "voice_local": ["env:voice-mlx", "model:drama3-mlx", "model:qwen3-asr"],
 }
 
 _lock = threading.Lock()
@@ -114,7 +120,7 @@ def size_of(c: dict) -> int:
 
 
 def supported(c: dict) -> bool:
-    if c["id"] in ("env:voice-mlx", "model:drama3-mlx"):
+    if c["id"] in ("env:voice-mlx", "model:drama3-mlx", "model:qwen3-asr"):
         return config.capabilities()["voice_local"]["available"]
     if c["id"] in MLX_YUE2 + TORCH_YUE2:
         return c["id"] in YUE2

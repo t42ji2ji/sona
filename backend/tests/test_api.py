@@ -18,9 +18,9 @@ def upload(api, tmp_path, seconds=5.0, name="song.wav"):
     return r.json()
 
 
-def make_voice(api, tmp_path, seconds=5.0):
+def make_voice(api, tmp_path, seconds=5.0, transcript="你好"):
     path = sine_wav(tmp_path / "ref.wav", seconds)
-    r = api.post("/voices", data={"name": "我", "transcript": "你好"},
+    r = api.post("/voices", data={"name": "我", "transcript": transcript},
                  files={"file": ("ref.wav", path.read_bytes(), "audio/wav")})
     assert r.status_code == 200, r.text
     return r.json()
@@ -68,7 +68,7 @@ def test_components_listed_ready(api):
     ids = {c["id"] for c in comps}
     assert {"env:yue2", "env:yue2-mlx", "env:demucs", "env:voice-mlx", "model:yue2-3b", "model:yue2-vae", "model:yue2-mlx",
             "model:sheetsage2",
-            "model:htdemucs", "model:htdemucs-ft", "model:drama3-mlx"} == ids
+            "model:htdemucs", "model:htdemucs-ft", "model:drama3-mlx", "model:qwen3-asr"} == ids
     for c in comps:
         assert c["state"] in ("ready", "unsupported")
         assert c["size_bytes"] > 0
@@ -166,6 +166,13 @@ def test_voice_local(api, tmp_path):
     assert t["text"] == "今天天氣很好"
 
 
+def test_voice_local_transcribes_reference(api, tmp_path):
+    v = make_voice(api, tmp_path, transcript="")
+    assert v["transcript"] == ""
+    check_track(api, wait_job(api, submit(api, "voice", voice_id=v["id"], text="嗨", backend="local")["id"]), "voice")
+    assert api.get("/voices").json()[0]["transcript"] == "我們去公園"
+
+
 def test_voice_api_requires_key(api, tmp_path):
     v = make_voice(api, tmp_path)
     api.put("/settings", json={"fish_api_key": ""})
@@ -244,7 +251,7 @@ def test_sse(api, server):
     events, done = read_events(server, lambda ev: any(
         k == "job" and d["id"] == job_id.get("id") and d["state"] == "done" for k, d in ev))
     time.sleep(0.5)
-    assert sum(1 for k, _ in events if k == "component") == 11   # snapshot on connect
+    assert sum(1 for k, _ in events if k == "component") == 12   # snapshot on connect
     job_id["id"] = submit(api, "song", style="pop", lyrics="hello")["id"]
     assert done.wait(20)
     job_events = [d for k, d in events if k == "job" and d["id"] == job_id["id"]]

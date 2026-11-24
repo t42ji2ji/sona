@@ -11,6 +11,8 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
+from opencc import OpenCC
+
 from . import audio, components, config, db, events, fish_api, settings
 from .engine import Cancelled, EngineError, manager
 from .errors import ApiError
@@ -18,6 +20,7 @@ from .errors import ApiError
 FEATURE = {"song": "song", "instrumental": "instrumental", "cover": "cover", "stems": "stems"}
 _wake = threading.Event()
 _running: dict = {"id": None, "cancel": False}
+_traditional = OpenCC("s2tw").convert   # ASR answers in simplified Chinese
 
 
 def now() -> str:
@@ -244,12 +247,20 @@ def _execute(job: dict, folder: Path) -> dict:
         return {"stems": result["stems"]}
     voice = db.get("voices", p["voice_id"])
     if p["backend"] == "local" or config.FAKE:
-        _run_engine(job, "voice-mlx", {"text": p["text"], "ref_audio": voice["path"],
-                                       "ref_text": voice["transcript"], "out": str(folder)})
+        result = _run_engine(job, "voice-mlx", {"text": p["text"], "ref_audio": voice["path"],
+                                                "ref_text": voice["transcript"], "out": str(folder)})
+        if not voice["transcript"] and result.get("ref_text"):
+            db.put("voices", {**voice, "transcript": _traditional(result["ref_text"])})
     else:
+        key = settings.load()["fish_api_key"]
+        if not voice["transcript"]:
+            job.update(stage="辨識參考錄音", progress=-1)
+            save(job)
+            voice = {**voice, "transcript": _traditional(fish_api.asr(key, Path(voice["path"])))}
+            db.put("voices", voice)
         job.update(stage="生成語音", progress=-1)
         save(job)
-        fish_api.tts(settings.load()["fish_api_key"], p["text"], Path(voice["path"]), voice["transcript"],
+        fish_api.tts(key, p["text"], Path(voice["path"]), voice["transcript"],
                      folder / "audio.mp3", lambda: _running["cancel"], lambda n: None)
         if _running["cancel"]:
             raise Cancelled()

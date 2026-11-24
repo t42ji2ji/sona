@@ -108,13 +108,11 @@ function VoiceItem({ voice, on, onSelect, onDelete }: { voice: Voice; on: boolea
 function NewVoice({ onCreated }: { onCreated: (v: Voice) => void }) {
   const t = useT()
   const [name, setName] = useState('')
-  const [transcript, setTranscript] = useState('')
   const [file, setFile] = useState<{ blob: Blob; name: string; url: string } | null>(null)
   const [rec, setRec] = useState<{ stop: () => void; start: number } | null>(null)
   const [elapsed, setElapsed] = useState(0)
   const [saving, setSaving] = useState(false)
   const input = useRef<HTMLInputElement>(null)
-  const nameEnter = useEnter(() => document.getElementById('voice-transcript')?.focus())
 
   useEffect(() => {
     if (!rec) return
@@ -141,13 +139,14 @@ function NewVoice({ onCreated }: { onCreated: (v: Voice) => void }) {
   }
 
   const save = async () => {
-    if (!file || !name.trim() || !transcript.trim() || saving) return
+    if (!file || !name.trim() || saving) return
     setSaving(true)
     try {
-      onCreated(await api.createVoice(name.trim(), transcript.trim(), file.blob, file.name))
-      setName(''); setTranscript(''); setFile(null)
+      onCreated(await api.createVoice(name.trim(), file.blob, file.name))
+      setName(''); setFile(null)
     } catch (e) { report(e) } finally { setSaving(false) }
   }
+  const nameEnter = useEnter(save)
 
   return (
     <section className="new-voice panel-inner">
@@ -170,11 +169,7 @@ function NewVoice({ onCreated }: { onCreated: (v: Voice) => void }) {
         <span>{t('voice.name')}</span>
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} {...nameEnter} />
       </label>
-      <label className="field">
-        <span>{t('voice.transcript')}</span>
-        <textarea id="voice-transcript" className="input" rows={4} value={transcript} onChange={(e) => setTranscript(e.target.value)} placeholder={t('voice.transcriptPh')} />
-      </label>
-      <button className="btn" disabled={!file || !name.trim() || !transcript.trim() || saving} onClick={save}>{t('voice.save')}</button>
+      <button className="btn" disabled={!file || !name.trim() || saving} onClick={save}>{t('voice.save')}</button>
     </section>
   )
 }
