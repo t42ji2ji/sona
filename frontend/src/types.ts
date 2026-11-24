@@ -76,7 +76,7 @@ export type Track = {
 
 export type Upload = { upload_id: string; filename: string; duration_s: number }
 
-export type Voice = { id: string; name: string; transcript: string; duration_s: number; created_at: string; sample_url: string }
+export type Voice = { id: string; name: string; transcript: string; duration_s: number; created_at: string; sample_url: string; sample?: boolean }
 
 export type Settings = {
   music_dir: string

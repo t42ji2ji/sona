@@ -34,9 +34,8 @@ def seed_sample_voice():
         folder.mkdir(parents=True, exist_ok=True)
         wav = folder / f"{id}.wav"
         seconds = audio.convert(SAMPLE_VOICE, wav, max_seconds=VOICE_MAX_SECONDS, mono=True, rate=44100)
-        name = "範例聲音" if settings.load()["language"] == "zh-TW" else "Sample voice"
-        db.put("voices", {"id": id, "name": name, "transcript": "", "duration_s": round(seconds, 2),
-                          "created_at": jobs.now(), "path": str(wav)})
+        db.put("voices", {"id": id, "name": "Sample voice", "transcript": "", "duration_s": round(seconds, 2),
+                          "created_at": jobs.now(), "path": str(wav), "sample": True})
     settings.mark("sample_voice_seeded")
 
 
@@ -243,7 +242,7 @@ def create_app(token: str) -> FastAPI:
 
     def voice_view(v: dict) -> dict:
         return {k: v[k] for k in ("id", "name", "transcript", "duration_s", "created_at")} | \
-            {"sample_url": f"/api/voices/{v['id']}/sample"}
+            {"sample_url": f"/api/voices/{v['id']}/sample", "sample": v.get("sample", False)}
 
     @app.get("/api/voices")
     def list_voices():

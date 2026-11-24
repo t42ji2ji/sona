@@ -7,6 +7,7 @@ import type { Feature, Job, Voice } from '../types.ts'
 import { Progress } from '../components/JobCard.tsx'
 import { DownloadBar } from '../components/DownloadBar.tsx'
 import { Icon } from '../components/Icon.tsx'
+import { AudioScrub } from '../components/AudioScrub.tsx'
 import { toWav } from './VoicePage.tsx'
 
 const MUSIC: Feature[] = ['song', 'instrumental', 'cover', 'stems']
@@ -165,7 +166,7 @@ function VoiceClone({ back }: { back: () => void }) {
         {step === 'listen' && track && (
           <div className="onboard-step">
             <h2 className="step-title">{t('wiz.listen')}</h2>
-            <audio className="sample" controls autoPlay src={mediaUrl(track.audio_url)} />
+            <AudioScrub autoPlay src={mediaUrl(track.audio_url)} />
             <div className="row-gap">
               <button className="btn ghost" onClick={() => setJobId(null)}>{t('wiz.tryAgain')}</button>
             </div>
@@ -236,7 +237,7 @@ function Recorder({ onSaved }: { onSaved: (v: Voice) => void }) {
         </button>
       ) : clip ? (
         <>
-          <audio className="sample" controls src={clip.url} />
+          <AudioScrub src={clip.url} />
           <div className="row-gap">
             <button className="btn ghost" onClick={start}>{t('wiz.recAgain')}</button>
             <button className="btn" disabled={saving} onClick={save}>{t('wiz.useIt')}</button>
@@ -276,7 +277,7 @@ function TryVoice({ voice, ready, job, onJob, onRerecord }: {
 
   return (
     <div className="onboard-step">
-      <h2 className="step-title">{t('wiz.tryTitle')}</h2>
+      <h2 className="step-title">{t(voice.sample ? 'wiz.trySampleTitle' : 'wiz.tryTitle')}</h2>
       <textarea className="input script-input" rows={3} value={text} onChange={(e) => setText(e.target.value)} disabled={live} />
       {live ? (
         <div className="wiz-progress">
@@ -289,7 +290,7 @@ function TryVoice({ voice, ready, job, onJob, onRerecord }: {
         </button>
       )}
       {job?.state === 'failed' && <div className="job-error">{job.error}</div>}
-      <button className="link small" onClick={onRerecord}>{t('wiz.newRec')}</button>
+      <button className="link small" onClick={onRerecord}>{t(voice.sample ? 'wiz.recOwn' : 'wiz.newRec')}</button>
     </div>
   )
 }

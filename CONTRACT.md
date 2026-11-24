@@ -135,7 +135,7 @@ SONA_READY {"port": 51234, "token": "<random>"}
 
 - `POST /uploads` multipart `file` → `{upload_id, filename, duration_s}`（mp3/wav/flac/m4a）
 - `POST /polish` `{text, tool?: "claude"|"codex"}` → `{text, tool}`：用使用者本機的 Claude Code／Codex CLI 把要念的文字改得更有語氣（不需 API key）；都沒裝 → 400 `no_ai_cli`
-- `GET /voices` → `Voice[]`，`POST /voices` multipart `name, file`（`transcript` 選填；留空時第一次生成語音會自動辨識參考錄音並存回），`DELETE /voices/{id}`，`GET /voices/{id}/sample`
+- `GET /voices` → `Voice[]`，`POST /voices` multipart `name, file`（`transcript` 選填；留空時第一次生成語音會自動辨識參考錄音並存回），`DELETE /voices/{id}`，`GET /voices/{id}/sample`。第一次啟動、聲音列表是空的時候，後端放一個內建範例聲音（`sample: true`，前端顯示翻譯過的名稱）；刪掉就不會再放
   ```ts
   type Voice = { id: string, name: string, transcript: string, duration_s: number, created_at: string, sample_url: string }
   ```

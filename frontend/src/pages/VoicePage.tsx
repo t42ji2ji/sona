@@ -5,6 +5,7 @@ import { report, useApp } from '../store.ts'
 import type { Quality, Voice } from '../types.ts'
 import { FeatureGate } from '../components/FeatureGate.tsx'
 import { Icon } from '../components/Icon.tsx'
+import { AudioScrub } from '../components/AudioScrub.tsx'
 import { useEnter } from '../ime.ts'
 
 export function VoicePage() {
@@ -104,7 +105,7 @@ export function VoicePage() {
             {voices.map((v) => (
               <VoiceItem key={v.id} voice={v} on={selected === v.id} onSelect={() => setSelected(v.id)}
                 onDelete={() => {
-                  if (!confirm(t('voice.confirmDelete', { t: v.name }))) return
+                  if (!confirm(t('voice.confirmDelete', { t: v.sample ? t('voice.sampleName') : v.name }))) return
                   api.deleteVoice(v.id).then(() => {
                     setVoices((list) => list.filter((x) => x.id !== v.id))
                     if (selected === v.id) setSelected(null)
@@ -137,6 +138,7 @@ export function VoicePage() {
 }
 
 function VoiceItem({ voice, on, onSelect, onDelete }: { voice: Voice; on: boolean; onSelect: () => void; onDelete: () => void }) {
+  const t = useT()
   const audio = useRef<HTMLAudioElement>(null)
   const [playing, setPlaying] = useState(false)
   const [time, setTime] = useState(0)
@@ -149,7 +151,7 @@ function VoiceItem({ voice, on, onSelect, onDelete }: { voice: Voice; on: boolea
         <Icon name={playing ? 'pause' : 'play'} size={16} />
       </button>
       <div className="row-main">
-        <div className="row-title">{voice.name}</div>
+        <div className="row-title">{voice.sample ? t('voice.sampleName') : voice.name}</div>
         <div className="muted small ellipsis">{voice.transcript}</div>
         {(on || playing) && (
           <input type="range" className="range voice-scrub" min={0} max={dur || 1} step={0.1} value={Math.min(time, dur)}
@@ -223,7 +225,7 @@ function NewVoice({ onCreated }: { onCreated: (v: Voice) => void }) {
           onChange={(e) => { const f = e.target.files?.[0]; if (f) choose(f, f.name); e.target.value = '' }} />
       </div>
       <div className="muted small">{t('voice.hint')}</div>
-      {file && <audio className="sample" controls src={file.url} />}
+      {file && <AudioScrub src={file.url} />}
       <label className="field">
         <span>{t('voice.name')}</span>
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} {...nameEnter} />

@@ -314,7 +314,7 @@ def test_upload_formats(api, tmp_path):
 
 
 def test_sample_voice_seeded_once(api):
-    sample = [v for v in api.get("/voices").json() if v["name"] in ("範例聲音", "Sample voice")]
+    sample = [v for v in api.get("/voices").json() if v["sample"]]
     assert len(sample) == 1 and 15 < sample[0]["duration_s"] <= 30
     assert api.get(f"/voices/{sample[0]['id']}/sample").status_code == 200
 
