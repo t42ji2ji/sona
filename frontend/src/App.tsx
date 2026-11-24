@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { useApp } from './store.ts'
 import { useT } from './i18n.ts'
-import { Backdrop } from './components/Backdrop.tsx'
 import { Sidebar } from './components/Sidebar.tsx'
 import { PlayerBar } from './components/PlayerBar.tsx'
 import { Create } from './pages/Create.tsx'
@@ -25,7 +24,6 @@ export function App() {
 
   return (
     <>
-      <Backdrop />
       <div className="titlebar" />
       {!booted ? null : page.name === 'wizard' ? (
         <Wizard />

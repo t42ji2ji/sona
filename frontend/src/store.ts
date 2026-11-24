@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { api, ApiError, subscribe } from './api.ts'
 import type { Component, EngineEvent, Feature, Job, Settings, System, Track } from './types.ts'
-import { fx } from './fx.ts'
 
 export type Page =
   | { name: 'create' }
@@ -79,11 +78,7 @@ export async function boot() {
       useApp.getState().refresh().catch(() => {})
     },
     close: () => useApp.setState({ connected: false }),
-    job: (j) => {
-      const prev = useApp.getState().jobs[j.id]
-      useApp.setState((s) => ({ jobs: { ...s.jobs, [j.id]: j } }))
-      if (j.state === 'done' && prev && prev.state !== 'done') fx.bloom(useApp.getState().tracks.find((t) => t.id === j.track_id)?.hue)
-    },
+    job: (j) => useApp.setState((s) => ({ jobs: { ...s.jobs, [j.id]: j } })),
     component: (c) => useApp.setState((s) => ({ components: { ...s.components, [c.id]: c } })),
     track: ({ action, track }) =>
       useApp.setState((s) => {

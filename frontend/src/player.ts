@@ -1,21 +1,9 @@
 import { create } from 'zustand'
 import { mediaUrl } from './api.ts'
 import type { Track } from './types.ts'
-import { fx } from './fx.ts'
 
 const audio = typeof Audio !== 'undefined' ? new Audio() : (null as unknown as HTMLAudioElement)
-if (audio) audio.crossOrigin = 'anonymous' // 後端要回 CORS，否則 AnalyserNode 會輸出靜音
 
-let ctx: AudioContext | null = null
-function ensureGraph() {
-  if (ctx) return void ctx.resume()
-  ctx = new AudioContext()
-  const analyser = ctx.createAnalyser()
-  analyser.fftSize = 256
-  analyser.smoothingTimeConstant = 0.8
-  ctx.createMediaElementSource(audio).connect(analyser).connect(ctx.destination)
-  fx.analyser = analyser
-}
 
 type PlayerState = {
   list: Track[]
@@ -48,19 +36,16 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
   play: (list, index) => {
     const t = list[index]
     if (!t) return
-    ensureGraph()
     const cur = get().current()
     if (cur?.id !== t.id) {
       audio.src = mediaUrl(t.audio_url)
       set({ time: 0, duration: t.duration_s })
     }
     set({ list, index })
-    fx.hue = t.hue
     void audio.play()
   },
   toggle: () => {
     if (!audio.src) return
-    ensureGraph()
     if (audio.paused) void audio.play()
     else audio.pause()
   },
@@ -83,8 +68,8 @@ export const usePlayer = create<PlayerState>()((set, get) => ({
 }))
 
 if (audio) {
-  audio.addEventListener('play', () => { usePlayer.setState({ playing: true }); fx.playing = true })
-  audio.addEventListener('pause', () => { usePlayer.setState({ playing: false }); fx.playing = false })
+  audio.addEventListener('play', () => { usePlayer.setState({ playing: true }) })
+  audio.addEventListener('pause', () => { usePlayer.setState({ playing: false }) })
   audio.addEventListener('timeupdate', () => usePlayer.setState({ time: audio.currentTime }))
   audio.addEventListener('loadedmetadata', () => usePlayer.setState({ duration: audio.duration }))
   audio.addEventListener('ended', () => usePlayer.getState().next())

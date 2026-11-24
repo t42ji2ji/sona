@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron')
 const path = require('node:path')
 const { startBackend, backendCommand } = require('./backend')
 
-const BG = '#121212'
+const BG = '#000000'
 const DEV_URL = 'http://localhost:5173'
 
 let win = null
