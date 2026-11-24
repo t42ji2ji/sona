@@ -98,6 +98,33 @@ export const api = {
   upload: (file: Blob, filename?: string) => req<Upload>('POST', '/uploads', form({ file }, filename)),
 
   voices: () => req<Voice[]>('GET', '/voices'),
+  /** NDJSON 串流：每段文字呼叫 onDelta，結束時 resolve；中途錯誤 throw */
+  assist: async (body: unknown, onDelta: (s: string) => void) => {
+    let res: Response
+    try {
+      res = await fetch(`${base}/api/assist`, { method: 'POST', body: JSON.stringify(body),
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } })
+    } catch { throw new ApiError('network', '連不上後端') }
+    if (!res.ok || !res.body) {
+      const data = await res.json().catch(() => null)
+      throw new ApiError(data?.error?.code ?? String(res.status), data?.error?.message ?? res.statusText)
+    }
+    const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
+    let buf = ''
+    for (;;) {
+      const { value, done } = await reader.read()
+      if (done) break
+      buf += value
+      const lines = buf.split('\n')
+      buf = lines.pop()!
+      for (const l of lines) {
+        if (!l.trim()) continue
+        const ev = JSON.parse(l)
+        if (ev.error) throw new ApiError('ai_failed', ev.error)
+        if (ev.delta) onDelta(ev.delta)
+      }
+    }
+  },
   polish: (text: string) => req<{ text: string; tool: 'claude' | 'codex' }>('POST', '/polish', { text }),
   createVoice: (name: string, file: Blob, filename?: string) =>
     req<Voice>('POST', '/voices', form({ name, file }, filename)),

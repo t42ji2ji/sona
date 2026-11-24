@@ -134,6 +134,7 @@ SONA_READY {"port": 51234, "token": "<random>"}
 ### 上傳與聲音
 
 - `POST /uploads` multipart `file` → `{upload_id, filename, duration_s}`（mp3/wav/flac/m4a）
+- `POST /assist` `{messages: [{role: "user"|"assistant", text}], mode: "song"|"instrumental"|"cover"|"cover-instrumental", form: {style?, lyrics?, title?}, tool?}` → NDJSON 串流：`{delta}`…，最後 `{done: true}` 或 `{error}`。音樂頁 AI 助理用本機 Claude Code／Codex 聊想要的感覺，提案放在回覆結尾的 ```sona JSON 區塊（style／lyrics／title）；都沒裝 → 400 `no_ai_cli`
 - `POST /polish` `{text, tool?: "claude"|"codex"}` → `{text, tool}`：用使用者本機的 Claude Code／Codex CLI 把要念的文字改得更有語氣（不需 API key）；都沒裝 → 400 `no_ai_cli`
 - `GET /voices` → `Voice[]`，`POST /voices` multipart `name, file`（`transcript` 選填；留空時第一次生成語音會自動辨識參考錄音並存回），`DELETE /voices/{id}`，`GET /voices/{id}/sample`。第一次啟動、聲音列表是空的時候，後端放一個內建範例聲音（`sample: true`，前端顯示翻譯過的名稱）；刪掉就不會再放
   ```ts

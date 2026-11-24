@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { api } from '../api.ts'
 import { useT } from '../i18n.ts'
 import type { Key } from '../i18n.ts'
@@ -7,6 +7,9 @@ import type { Feature, Job, JobParams, JobType, Quality, Upload } from '../types
 import { FeatureGate } from '../components/FeatureGate.tsx'
 import { DropUpload } from '../components/Upload.tsx'
 import { TrackRow } from '../components/TrackRow.tsx'
+import { AgentPanel } from '../components/AgentPanel.tsx'
+import type { Proposal } from '../components/AgentPanel.tsx'
+import { Icon } from '../components/Icon.tsx'
 
 type Tab = 'song' | 'instrumental' | 'cover' | 'stems'
 const tabs: Tab[] = ['song', 'instrumental', 'cover', 'stems']
@@ -27,6 +30,36 @@ export function Create() {
   const [instrumental, setInstrumental] = useState(false)
   const [stemModel, setStemModel] = useState<'htdemucs' | 'htdemucs_ft'>('htdemucs')
   const [sending, setSending] = useState(false)
+  const [agentOpen, setAgentOpen] = useState(() => localStorage.getItem('sona.agentOpen') === '1')
+  const ai = useApp((s) => s.system?.ai_tools)
+  const aiOk = !!(ai?.claude || ai?.codex)
+  const styleBox = useRef<HTMLTextAreaElement>(null)
+  const lyricsBox = useRef<HTMLTextAreaElement>(null)
+  const agentShown = agentOpen && aiOk && tab !== 'stems'
+  const toggleAgent = (v = !agentOpen) => { setAgentOpen(v); localStorage.setItem('sona.agentOpen', v ? '1' : '0') }
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key.toLowerCase() === 'j' && aiOk && tab !== 'stems') { e.preventDefault(); toggleAgent() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
+  /** 走 insertText 讓 ⌘Z 能還原 AI 套用的內容 */
+  const put = (el: HTMLTextAreaElement | null, value: string, set: (v: string) => void) => {
+    if (!el) return set(value)
+    el.focus()
+    el.select()
+    if (!document.execCommand('insertText', false, value)) set(value)
+  }
+  const applyProposal = (p: Proposal) => {
+    if (p.title) setTitle(p.title)
+    if (p.lyrics && lyricsBox.current) put(lyricsBox.current, p.lyrics, setLyrics)
+    if (p.style) put(styleBox.current, p.style, setStyle)
+  }
+  const agentMode = tab === 'cover' && instrumental ? 'cover-instrumental' : tab
+  const hasLyrics = tab === 'song' || (tab === 'cover' && !instrumental)
 
   const pick = (x: Tab) => { setTab(x); sessionStorage.setItem('sona.tab', x) }
   const addTag = (tag: string) => setStyle((s) => (s.trim() ? `${s.trim().replace(/,$/, '')}, ${tag}` : tag))
@@ -61,9 +94,17 @@ export function Create() {
   }
 
   return (
-    <div className="create">
+    <div className={`create ${agentShown ? 'with-agent' : ''}`}>
       <section className="create-form scroll">
-        <h1 className="page-title">{t('nav.create')}</h1>
+        <div className="page-head">
+          <h1 className="page-title">{t('nav.create')}</h1>
+          {tab !== 'stems' && (
+            <button className={`btn ghost small ${agentShown ? 'on' : ''}`} disabled={!aiOk} onClick={() => toggleAgent()}
+              title={aiOk ? t('agent.tip') : t('voice.noAi')}>
+              <Icon name="create" size={14} /> {t('agent.open')}
+            </button>
+          )}
+        </div>
         <div className="segmented">
           {tabs.map((x) => (
             <button key={x} className={tab === x ? 'on' : ''} onClick={() => pick(x)}>{t(`kind.${x}`)}</button>
@@ -76,7 +117,7 @@ export function Create() {
           {tab !== 'stems' && (
             <label className="field">
               <span>{t('create.style')}</span>
-              <textarea className="input" rows={2} value={style} onChange={(e) => setStyle(e.target.value)}
+              <textarea ref={styleBox} className="input" rows={2} value={style} onChange={(e) => setStyle(e.target.value)}
                 placeholder={t(tab === 'instrumental' ? 'create.instStylePh' : 'create.stylePh')} />
               <div className="chips">
                 {TAGS.map((tag) => <button key={tag} className="chip" onClick={() => addTag(tag)}>{tag}</button>)}
@@ -94,7 +135,7 @@ export function Create() {
           {(tab === 'song' || (tab === 'cover' && !instrumental)) && (
             <label className="field">
               <span>{t(tab === 'song' ? 'create.lyrics' : 'create.newLyrics')}</span>
-              <textarea className="input lyrics" rows={tab === 'song' ? 10 : 5} value={lyrics} onChange={(e) => setLyrics(e.target.value)}
+              <textarea ref={lyricsBox} className="input lyrics" rows={tab === 'song' ? 10 : 5} value={lyrics} onChange={(e) => setLyrics(e.target.value)}
                 placeholder={t('create.lyricsPh')} />
             </label>
           )}
@@ -153,6 +194,10 @@ export function Create() {
         <h2 className="section-title">{t('create.recent')}</h2>
         {tracks.slice(0, 30).map((tr, i, list) => <TrackRow key={tr.id} list={list} index={i} actions={false} />)}
       </section>
+      {agentShown && (
+        <AgentPanel mode={agentMode} onApply={applyProposal} onClose={() => toggleAgent(false)}
+          form={{ title, style, ...(hasLyrics ? { lyrics } : {}) }} />
+      )}
     </div>
   )
 }

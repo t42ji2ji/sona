@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from starlette.exceptions import HTTPException
 
-from . import audio, components, config, db, events, jobs, polish, settings
+from . import assist, audio, components, config, db, events, jobs, polish, settings
 from .engine import manager
 from .errors import ApiError
 
@@ -271,6 +271,10 @@ def create_app(token: str) -> FastAPI:
         Path(voice_or_404(id)["path"]).unlink(missing_ok=True)
         db.delete("voices", id)
         return {"ok": True}
+
+    @app.post("/api/assist")
+    def assist_chat(body: dict):
+        return StreamingResponse(assist.start(body), media_type="application/x-ndjson")
 
     @app.post("/api/polish")
     def polish_text(body: dict):

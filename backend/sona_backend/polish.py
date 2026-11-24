@@ -31,6 +31,21 @@ def _which(name: str) -> str | None:
     return shutil.which(name, path=path)
 
 
+def cli_env() -> dict:
+    env = {**os.environ, "PATH": os.pathsep.join([os.environ.get("PATH", ""), *map(str, EXTRA_PATH)])}
+    env.setdefault("USER", getpass.getuser())     # claude reads its keychain login by user name
+    env.setdefault("LOGNAME", env["USER"])
+    return env
+
+
+def pick_tool(tool: str | None) -> str:
+    available = [t for t, ok in tools().items() if ok]
+    tool = tool or (available[0] if available else None)
+    if tool not in available:
+        raise ApiError(400, "no_ai_cli", "找不到本機的 Claude Code 或 Codex，請先安裝並登入其中一個。")
+    return tool
+
+
 def tools() -> dict:
     return {"claude": bool(_which("claude")), "codex": bool(_which("codex"))}
 
@@ -40,13 +55,8 @@ def polish(text: str, tool: str | None) -> dict:
         raise ApiError(400, "invalid_params", "沒有要修飾的文字。")
     if config.FAKE:
         return {"text": text.strip() + "！", "tool": tool or "claude"}
-    available = [t for t, ok in tools().items() if ok]
-    tool = tool or (available[0] if available else None)
-    if tool not in available:
-        raise ApiError(400, "no_ai_cli", "找不到本機的 Claude Code 或 Codex，請先安裝並登入其中一個。")
-    env = {**os.environ, "PATH": os.pathsep.join([os.environ.get("PATH", ""), *map(str, EXTRA_PATH)])}
-    env.setdefault("USER", getpass.getuser())     # claude reads its keychain login by user name
-    env.setdefault("LOGNAME", env["USER"])
+    tool = pick_tool(tool)
+    env = cli_env()
     with tempfile.TemporaryDirectory() as tmp:
         if tool == "claude":
             cmd = [_which("claude"), "-p", "--model", "sonnet", "--tools", "", "--permission-mode", "default",

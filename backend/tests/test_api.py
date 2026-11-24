@@ -313,6 +313,13 @@ def test_upload_formats(api, tmp_path):
     assert r.status_code == 400 and r.json()["error"]["code"] == "unreadable_audio"
 
 
+def test_assist_streams_proposal(api):
+    r = api.post("/assist", json={"messages": [{"role": "user", "text": "下雨天"}], "mode": "instrumental", "form": {}})
+    lines = [json.loads(x) for x in r.text.splitlines()]
+    text = "".join(x.get("delta", "") for x in lines)
+    assert lines[-1] == {"done": True} and '"style"' in text and "```sona" in text
+
+
 def test_sample_voice_seeded_once(api):
     sample = [v for v in api.get("/voices").json() if v["sample"]]
     assert len(sample) == 1 and 15 < sample[0]["duration_s"] <= 30

@@ -24,6 +24,7 @@ const paths = {
   music: 'M9 17.5V6.5l10-2v11M9 17.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0ZM19 15.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z',
   back: 'M14.5 5.5 8 12l6.5 6.5',
   check: 'M5 12.5l4.5 4.5L19 7.5',
+  send: 'M12 19V5M6 11l6-6 6 6',
 }
 
 export type IconName = keyof typeof paths
