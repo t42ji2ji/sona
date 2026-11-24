@@ -16,7 +16,9 @@ BARS = 72
 
 
 def sh(*cmd):
-    subprocess.run(cmd, check=True, capture_output=True)
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode:
+        sys.exit("ffmpeg 失敗：" + r.stderr.strip()[-400:])
 
 
 def chunks(text, limit=80):
@@ -75,7 +77,10 @@ def main():
     manifest = {"voices": [], "lines": cfg["lines"], "tone": None, "credit": cfg.get("credit")}
     work = Path(tempfile.mkdtemp())
     for v in cfg["voices"]:
-        src = (base / v["file"]).expanduser()
+        src = Path(v["file"]).expanduser()
+        src = src if src.is_absolute() else base / src
+        if not src.is_file():
+            sys.exit(f"找不到 {v['id']} 的錄音：{src}")
         ref = work / f"{v['id']}.wav"
         # the clip visitors hear first, and what the model clones from: one speaker, no music
         sh(FFMPEG, "-y", "-loglevel", "error", "-ss", str(v.get("start", 0)), "-t", str(v.get("seconds", 15)),
