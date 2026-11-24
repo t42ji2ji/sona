@@ -1,0 +1,79 @@
+{
+  "credit": {
+    "en": "",
+    "zh": ""
+  },
+  "voices": [
+    {
+      "id": "v1",
+      "file": "~/Downloads/voice samples/voice sample 1 片段.mp3",
+      "name": {
+        "en": "Voice 1",
+        "zh": "聲音 1"
+      },
+      "start": 0,
+      "seconds": 15
+    },
+    {
+      "id": "v2",
+      "file": "~/Downloads/voice samples/voice sample 2 片段.mp3",
+      "name": {
+        "en": "Voice 2",
+        "zh": "聲音 2"
+      },
+      "start": 0,
+      "seconds": 15
+    },
+    {
+      "id": "v3",
+      "file": "~/Downloads/voice samples/voice sample 3 片段.mp3",
+      "name": {
+        "en": "Voice 3",
+        "zh": "聲音 3"
+      },
+      "start": 0,
+      "seconds": 15
+    },
+    {
+      "id": "v4",
+      "file": "~/Downloads/voice samples/voice sample 4 片段.mp3",
+      "name": {
+        "en": "Voice 4",
+        "zh": "聲音 4"
+      },
+      "start": 0,
+      "seconds": 15
+    }
+  ],
+  "lines": [
+    {
+      "id": "l1",
+      "text": "今天的會議我們先講結論，細節等一下再說。",
+      "label": {
+        "en": "Mandarin",
+        "zh": "中文"
+      }
+    },
+    {
+      "id": "l2",
+      "text": "Honestly, I didn't expect this to sound so much like me.",
+      "label": {
+        "en": "English",
+        "zh": "英文"
+      }
+    },
+    {
+      "id": "l3",
+      "text": "欸你等一下，這真的不是我本人講的嗎？",
+      "label": {
+        "en": "Casual",
+        "zh": "口語"
+      }
+    }
+  ],
+  "tone": {
+    "voice": "v1",
+    "before": "明天要交報告，可是我還沒開始寫。",
+    "after": "欸，明天就要交報告了耶……可是我，我還沒開始寫啦！"
+  }
+}

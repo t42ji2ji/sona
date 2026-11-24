@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sona — write songs, and speak in your own voice</title>
-<meta name="description" content="Clone your voice from a 15-second recording and write songs, all on your own computer. Free and open source.">
+<title>Sona — 15 seconds of a voice, then it says anything</title>
+<meta name="description" content="Fifteen seconds of a voice, then it says anything. Voice cloning on your own computer. Free and open source.">
 <meta name="theme-color" content="#000000">
 <link rel="canonical" href="https://sona.dorara.app/">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
@@ -13,8 +13,8 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Sona">
 <meta property="og:url" content="https://sona.dorara.app/">
-<meta property="og:title" content="Sona — write songs, and speak in your own voice">
-<meta property="og:description" content="Clone your voice from a 15-second recording and write songs, all on your own computer. Free and open source.">
+<meta property="og:title" content="Sona — 15 seconds of a voice, then it says anything">
+<meta property="og:description" content="Fifteen seconds of a voice, then it says anything. Voice cloning on your own computer. Free and open source.">
 <meta property="og:image" content="https://sona.dorara.app/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -30,7 +30,7 @@
   })();
 </script>
 <link rel="preload" href="assets/geist.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="style.css?v=1">
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
 
@@ -47,82 +47,73 @@
 
 <main>
   <section class="hero">
-    <div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
     <h1>
-      <span data-en>Write songs.<br>Speak in your own voice.</span>
-      <span data-zh>寫歌，<br>也用你自己的聲音說話。</span>
+      <span data-en>Fifteen seconds of a voice.<br>Then it says anything.</span>
+      <span data-zh>十五秒的聲音，<br>之後什麼都能說。</span>
     </h1>
     <p class="sub">
-      <span data-en>On your own computer. Free, open source, no account.</span>
-      <span data-zh>全部在你的電腦上跑。免費、開源、不用帳號。</span>
+      <span data-en>Voice cloning that runs on your own computer. Free and open source.</span>
+      <span data-zh>在你自己的電腦上複製聲音。免費、開源。</span>
     </p>
-    <div class="cta">
-      <a class="btn" href="https://github.com/t42ji2ji/sona/releases/latest/download/Sona.dmg">
-        <span data-en>Download for Mac</span><span data-zh>下載 Mac 版</span>
-      </a>
-      <span class="muted small">
-        <span data-en>Apple Silicon, macOS 12+ · <a href="https://github.com/t42ji2ji/sona/releases/latest/download/Sona-Setup.exe">Windows</a> · <a href="https://github.com/t42ji2ji/sona/releases">all releases</a></span>
-        <span data-zh>Apple Silicon、macOS 12 以上 · <a href="https://github.com/t42ji2ji/sona/releases/latest/download/Sona-Setup.exe">Windows 版</a> · <a href="https://github.com/t42ji2ji/sona/releases">所有版本</a></span>
-      </span>
+  </section>
+
+  <section class="demo" id="demo" hidden>
+    <div class="voices" role="tablist" aria-label="Voices"></div>
+    <div class="row ref">
+      <button class="play" type="button" aria-label="Play"></button>
+      <div class="row-body">
+        <div class="row-label"><span data-en>Original recording</span><span data-zh>原始錄音</span> · <span class="ref-sec"></span></div>
+        <div class="wave"></div>
+      </div>
     </div>
+    <div class="says-label"><span data-en>Then Sona says</span><span data-zh>接著 Sona 說</span></div>
+    <div class="says"></div>
+  </section>
+
+  <section class="tone" id="tone" hidden>
+    <h2><span data-en>Flat text, read with feeling</span><span data-zh>照稿念，也能有語氣</span></h2>
+    <p class="muted"><span data-en>Press <b>Add tone</b> and your own Claude Code or Codex rewrites the line the way people talk.</span><span data-zh>按「修飾語氣」，你自己的 Claude Code 或 Codex 會把句子改成真人說話的樣子。</span></p>
+    <div class="tone-pair">
+      <div class="row before">
+        <button class="play" type="button" aria-label="Play"></button>
+        <div class="row-body"><del class="tone-text"></del><div class="wave"></div></div>
+      </div>
+      <div class="row after">
+        <button class="play" type="button" aria-label="Play"></button>
+        <div class="row-body"><p class="tone-text"></p><div class="wave"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="get">
+    <a class="btn" href="https://github.com/t42ji2ji/sona/releases/latest/download/Sona.dmg">
+      <span data-en>Download for Mac</span><span data-zh>下載 Mac 版</span>
+    </a>
+    <span class="muted small">
+      <span data-en>Apple Silicon, macOS 12+, 16 GB memory · <a href="https://github.com/t42ji2ji/sona/releases/latest/download/Sona-Setup.exe">Windows</a> (songs only) · <a href="https://github.com/t42ji2ji/sona/releases">all releases</a></span>
+      <span data-zh>Apple Silicon、macOS 12 以上、16 GB 記憶體 · <a href="https://github.com/t42ji2ji/sona/releases/latest/download/Sona-Setup.exe">Windows 版</a>（只有寫歌）· <a href="https://github.com/t42ji2ji/sona/releases">所有版本</a></span>
+    </span>
   </section>
 
   <figure class="shot">
-    <img data-en src="assets/voice-en.webp" width="1600" height="1000" alt="Sona's voice page: a cloned voice, the text to speak, and a rewrite with more feeling">
-    <img data-zh src="assets/voice-zh.webp" width="1600" height="1000" alt="Sona 的聲音頁：複製好的聲音、要念的文字，和加了語氣的改寫" loading="lazy">
+    <img data-en src="assets/voice-en.webp" width="1600" height="1000" alt="Sona's voice page" loading="lazy">
+    <img data-zh src="assets/voice-zh.webp" width="1600" height="1000" alt="Sona 的聲音頁" loading="lazy">
   </figure>
 
-  <section class="features">
-    <div>
-      <h2><span data-en>Your voice</span><span data-zh>你的聲音</span></h2>
-      <p><span data-en>Read a paragraph aloud for 15 seconds. Then type anything and hear it in your voice, in seconds.</span>
-         <span data-zh>照著唸一段話，大約 15 秒。之後打什麼字，幾秒內就用你的聲音念出來。</span></p>
-    </div>
-    <div>
-      <h2><span data-en>Add tone</span><span data-zh>修飾語氣</span></h2>
-      <p><span data-en>Your own Claude Code or Codex rewrites flat text the way people actually talk. You choose whether to use it.</span>
-         <span data-zh>用你自己的 Claude Code 或 Codex，把照稿念的文字改成真人說話的語氣，要不要套用由你決定。</span></p>
-    </div>
-    <div>
-      <h2><span data-en>Songs</span><span data-zh>寫歌</span></h2>
-      <p><span data-en>Describe a style, add lyrics, get a sung song. Or an instrumental, or a cover of a song you upload.</span>
-         <span data-zh>寫下風格和歌詞，生成一首有人聲的歌。也能做純音樂，或把上傳的歌換個風格重唱。</span></p>
-    </div>
-    <div>
-      <h2><span data-en>Stems</span><span data-zh>拆軌</span></h2>
-      <p><span data-en>Split any song into vocals, drums, bass and the rest. Mute or solo each part.</span>
-         <span data-zh>把一首歌拆成人聲、鼓、貝斯和其他，每一軌都能單獨靜音或獨奏。</span></p>
-    </div>
-  </section>
-
-  <section class="split">
-    <div class="split-text">
-      <h2><span data-en>Starts with one question</span><span data-zh>一打開，先問你想做什麼</span></h2>
-      <p><span data-en>Pick music or your voice. Sona downloads only what that needs, only versions that run on your machine, and you can pause anytime.</span>
-         <span data-zh>選做音樂或複製聲音。Sona 只下載那條路需要、你這台電腦跑得動的模型，下載隨時可以暫停。</span></p>
-    </div>
-    <figure class="shot small-shot">
-      <img data-en src="assets/record-en.webp" width="1600" height="1000" alt="Onboarding: read a paragraph aloud to clone your voice" loading="lazy">
-      <img data-zh src="assets/record-zh.webp" width="1600" height="1000" alt="Onboarding：照著唸一段話來複製聲音" loading="lazy">
-    </figure>
-  </section>
-
-  <section class="facts">
-    <dl>
-      <div><dt><span data-en>Voice</span><span data-zh>聲音複製</span></dt><dd><span data-en>Mac, Apple Silicon, 16 GB memory</span><span data-zh>Mac（Apple Silicon），記憶體 16 GB</span></dd></div>
-      <div><dt><span data-en>Songs</span><span data-zh>寫歌</span></dt><dd><span data-en>Mac, or Windows with an NVIDIA GPU</span><span data-zh>Mac，或有 NVIDIA 顯示卡的 Windows</span></dd></div>
-      <div><dt><span data-en>Privacy</span><span data-zh>隱私</span></dt><dd><span data-en>Recordings and songs stay on your computer</span><span data-zh>錄音和歌都留在你的電腦上</span></dd></div>
-      <div><dt><span data-en>License</span><span data-zh>授權</span></dt><dd><span data-en>AGPL-3.0. Some models are non-commercial</span><span data-zh>AGPL-3.0；部分模型限非商業使用</span></dd></div>
-    </dl>
+  <section class="also">
+    <p><span data-en>Sona also writes songs from a style and lyrics, and splits any song into vocals, drums, bass and the rest. Recordings and songs stay on your computer.</span>
+       <span data-zh>Sona 也能用風格和歌詞寫歌，或把一首歌拆成人聲、鼓、貝斯和其他。錄音和歌都留在你的電腦上。</span></p>
   </section>
 </main>
 
 <footer class="foot">
-  <span>Sona</span>
+  <span>Sona · AGPL-3.0</span>
   <a href="https://github.com/t42ji2ji/sona">GitHub</a>
   <a href="https://dorara.app/about">dorara.app</a>
+  <span class="credit"></span>
 </footer>
 
-<script src="main.js?v=1"></script>
+<script src="assets/demo.js?v=1"></script>
+<script src="main.js?v=2"></script>
 </body>
 </html>
