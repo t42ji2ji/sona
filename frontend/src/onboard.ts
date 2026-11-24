@@ -2,9 +2,10 @@ import type { Component, Feature, Job, Voice } from './types.ts'
 
 export type Download = { state: 'ready' | 'missing' | 'downloading' | 'error'; done: number; total: number; errors: string[] }
 
-/** 一個功能還缺的元件合起來的下載狀態；total/done 只算還沒裝好的部分 */
-export function download(comps: Component[], f: Feature): Download {
-  const list = comps.filter((c) => c.needed_for.includes(f))
+/** 幾個功能還缺的元件合起來的下載狀態；total/done 只算還沒裝好的部分，別的平台版本不算 */
+export function download(comps: Component[], fs: Feature | Feature[]): Download & { left: Component[] } {
+  const want = Array.isArray(fs) ? fs : [fs]
+  const list = comps.filter((c) => c.state !== 'unsupported' && c.needed_for.some((f) => want.includes(f)))
   const left = list.filter((c) => c.state !== 'ready')
   const errors = left.filter((c) => c.state === 'error').map((c) => `${c.name}：${c.error ?? ''}`)
   const total = left.reduce((a, c) => a + c.size_bytes, 0)
@@ -13,7 +14,7 @@ export function download(comps: Component[], f: Feature): Download {
     : errors.length ? 'error'
     : left.some((c) => c.state === 'installing' || c.state === 'queued') ? 'downloading'
     : 'missing'
-  return { state, done, total, errors }
+  return { state, done, total, errors, left }
 }
 
 export type VoiceStep = 'record' | 'try' | 'listen'

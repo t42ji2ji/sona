@@ -15,6 +15,11 @@ test('download: missing / downloading / error / ready, counts only what is left'
   assert.equal(download([comp('a', 'error'), comp('b', 'installing')], 'voice_local').state, 'error')
   assert.equal(download([comp('a', 'ready'), comp('x', 'missing', 1, 0, ['song'])], 'voice_local').state, 'ready')
   assert.equal(download([], 'voice_local').state, 'missing')
+  // 別的平台版本（unsupported）不算進大小，也不擋 ready
+  const mac = download([comp('mlx', 'ready', 300, 300, ['song']), comp('torch', 'unsupported', 5000, 0, ['song'])], 'song')
+  assert.deepEqual([mac.state, mac.total], ['ready', 0])
+  const both = download([comp('a', 'missing', 100, 0, ['song']), comp('a2', 'missing', 50, 0, ['song', 'cover']), comp('b', 'missing', 10, 0, ['cover'])], ['song', 'cover'])
+  assert.equal(both.total, 160)
 })
 
 test('voiceStep: derived from voices and the try-out job, survives reopening', () => {

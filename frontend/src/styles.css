@@ -341,6 +341,9 @@ textarea.lyrics { font-size: 14px; line-height: 1.7; min-height: 200px; }
 .rec-big.on .rec-dot { animation: pulse 1s ease-in-out infinite; }
 .btn.big { height: 48px; padding: 0 24px; font-size: 16px; }
 .row-gap { display: flex; gap: 8px; }
+.dl { display: flex; flex-direction: column; gap: 8px; align-self: stretch; }
+.dl-row { display: flex; align-items: center; gap: 12px; }
+.dl-row > span:first-child { flex: 1; }
 .self-start { align-self: flex-start; }
 .link.small { font-size: 13px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
 @media (max-width: 640px) { .choices { grid-template-columns: 1fr; } .onboard { padding: 48px 20px 0; } }

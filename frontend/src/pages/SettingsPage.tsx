@@ -9,7 +9,7 @@ import { useEnter } from '../ime.ts'
 export function SettingsPage() {
   const t = useT()
   const settings = useApp((s) => s.settings)
-  const comps = Object.values(useApp((s) => s.components))
+  const comps = Object.values(useApp((s) => s.components)).filter((c) => c.state !== 'unsupported')
   const [dir, setDir] = useState(settings?.music_dir ?? '')
   const [key, setKey] = useState('')
 
@@ -84,9 +84,9 @@ export function ComponentRow({ c }: { c: Component }) {
       {c.state === 'ready' ? (
         <button className="btn ghost small" onClick={() => confirm(t('comp.confirmDelete', { t: c.name })) && api.deleteComponent(c.id).catch(report)}>{t('comp.delete')}</button>
       ) : busy ? (
-        <button className="btn ghost small" onClick={() => api.cancelComponent(c.id).catch(report)}>{t('comp.cancel')}</button>
+        <button className="btn ghost small" onClick={() => api.cancelComponent(c.id).catch(report)} title={t('dl.pauseTip')}>{t('dl.pause')}</button>
       ) : c.state !== 'unsupported' ? (
-        <button className="btn small" onClick={() => api.installComponent(c.id).catch(report)}>{c.state === 'error' ? t('comp.retry') : t('comp.install')}</button>
+        <button className="btn small" onClick={() => api.installComponent(c.id).catch(report)}>{c.state === 'error' ? t('comp.retry') : c.done_bytes > 0 ? t('dl.resume') : t('comp.install')}</button>
       ) : <span />}
     </div>
   )

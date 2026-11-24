@@ -91,8 +91,9 @@ export async function boot() {
   })
 }
 
+/** 這台電腦用得到的元件；別的平台版本（unsupported）不算 */
 export function featureComponents(comps: Component[], f: Feature) {
-  return comps.filter((c) => c.needed_for.includes(f))
+  return comps.filter((c) => c.needed_for.includes(f) && c.state !== 'unsupported')
 }
 
 export function featureReady(comps: Component[], f: Feature) {

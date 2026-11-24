@@ -5,6 +5,7 @@ import { download, voiceStep } from '../onboard.ts'
 import { featureComponents, report, useApp } from '../store.ts'
 import type { Feature, Job, Voice } from '../types.ts'
 import { Progress } from '../components/JobCard.tsx'
+import { DownloadBar } from '../components/DownloadBar.tsx'
 import { Icon } from '../components/Icon.tsx'
 import { toWav } from './VoicePage.tsx'
 
@@ -90,10 +91,8 @@ function Music({ back }: { back: () => void }) {
   const [picked, setPicked] = useState<Set<Feature>>(() => new Set(MUSIC.filter((f) => f !== 'cover' && f !== 'stems' && usable(f))))
   const isReady = (f: Feature) => download(comps, f).state === 'ready'
   const chosen = [...picked].filter((f) => usable(f) && !isReady(f))
-  const left = new Map(chosen.flatMap((f) => featureComponents(comps, f)).filter((c) => c.state !== 'ready').map((c) => [c.id, c]))
-  const total = [...left.values()].reduce((a, c) => a + c.size_bytes, 0)
-  const done = [...left.values()].reduce((a, c) => a + c.done_bytes, 0)
-  const started = [...left.values()].some((c) => c.state !== 'missing')
+  const d = download(comps, chosen)
+  const started = d.state === 'downloading' || d.state === 'error' || d.done > 0
 
   const install = async () => {
     try { for (const f of chosen) await api.installFeature(f) } catch (e) { report(e) }
@@ -122,19 +121,13 @@ function Music({ back }: { back: () => void }) {
             )
           })}
         </div>
-        {started && total > 0 && (
-          <div className="wiz-progress">
-            <Progress value={done / total} />
-            <div className="job-meta"><span>{[...left.values()].find((c) => c.state === 'installing')?.name ?? ''}</span><span className="tabular">{fmtBytes(done)} / {fmtBytes(total)}</span></div>
-            {[...left.values()].filter((c) => c.state === 'error').map((c) => <div key={c.id} className="job-error">{c.name}：{c.error}</div>)}
-          </div>
-        )}
+        {started && <DownloadBar features={chosen} />}
         {started && <div className="muted">{t('wiz.nextMusic')}</div>}
       </div>
       <footer className="onboard-foot">
         <button className="link" onClick={() => finish('create')}>{t('wiz.skip')}</button>
         {!started && chosen.length > 0
-          ? <button className="btn big" onClick={install}>{t('wiz.install')} · {fmtBytes(total - done)}</button>
+          ? <button className="btn big" onClick={install}>{t('wiz.install')} · {fmtBytes(d.total)}</button>
           : <button className="btn big" onClick={() => finish('create')}>{t('wiz.done')}</button>}
       </footer>
     </>
@@ -156,26 +149,13 @@ function VoiceClone({ back }: { back: () => void }) {
   const step = voiceStep(voices, job, rerecord)
   const voice = voices[0]
 
-  const retry = () => { for (const c of featureComponents(comps, 'voice_local')) if (c.state === 'error' || c.state === 'missing') api.installComponent(c.id).catch(report) }
 
   return (
     <>
       <div className="onboard-body">
         <Back onClick={back} />
         <h1 className="onboard-title">{t('wiz.voice')}</h1>
-        {dl.state !== 'ready' && (
-          <div className="wiz-progress">
-            <Progress value={dl.state === 'downloading' && dl.total ? dl.done / dl.total : dl.state === 'error' ? 0 : -1} />
-            <div className="job-meta">
-              <span>{dl.state === 'error' ? t('wiz.dlFailed') : t('wiz.downloading')}</span>
-              <span className="tabular">{fmtBytes(dl.done)} / {fmtBytes(dl.total)}</span>
-            </div>
-            {dl.errors.map((e) => <div key={e} className="job-error">{e}</div>)}
-            {(dl.state === 'error' || dl.state === 'missing') && (
-              <button className="btn ghost small self-start" onClick={retry}>{dl.state === 'error' ? t('wiz.retry') : t('wiz.download', { s: fmtBytes(dl.total - dl.done) })}</button>
-            )}
-          </div>
-        )}
+        <DownloadBar features={['voice_local']} label={t('wiz.downloading')} />
         {step === 'record' && (
           <Recorder onSaved={(v) => { setVoices([v, ...voices]); setRerecord(false); setJobId(null) }} />
         )}
@@ -195,7 +175,7 @@ function VoiceClone({ back }: { back: () => void }) {
       </div>
       <footer className="onboard-foot">
         <button className="link" onClick={() => finish('create')}>{t('wiz.skip')}</button>
-        {step === 'listen' && <button className="btn big" onClick={() => finish('voice')}>{t('wiz.done')}</button>}
+        {step !== 'record' && <button className="btn big" onClick={() => finish('voice')}>{t('wiz.done')}</button>}
       </footer>
     </>
   )
