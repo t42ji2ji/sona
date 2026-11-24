@@ -4,7 +4,7 @@ import { useApp } from '../store.ts'
 import type { Track } from '../types.ts'
 import { Cover } from './Cover.tsx'
 import { Icon } from './Icon.tsx'
-import { DeleteButton, LikeButton, RevealButton } from './TrackActions.tsx'
+import { DeleteButton, DownloadButton, LikeButton, RevealButton } from './TrackActions.tsx'
 
 export function PlayOverlay({ list, index }: { list: Track[]; index: number }) {
   const playing = usePlayer((s) => s.playing && s.list[s.index]?.id === list[index].id)
@@ -36,6 +36,7 @@ export function TrackRow({ list, index, actions = true }: { list: Track[]; index
         <div className="muted small ellipsis">{[t(`kind.${track.kind}`), track.style ?? track.text].filter(Boolean).join(' · ')}</div>
       </div>
       <LikeButton track={track} />
+      {actions && <DownloadButton track={track} />}
       {actions && <RevealButton track={track} />}
       {actions && <DeleteButton track={track} />}
       <span className="muted small tabular">{fmtDuration(track.duration_s)}</span>

@@ -6,7 +6,6 @@ import { report, useApp } from '../store.ts'
 import type { Feature, Job, JobParams, JobType, Quality, Upload } from '../types.ts'
 import { FeatureGate } from '../components/FeatureGate.tsx'
 import { DropUpload } from '../components/Upload.tsx'
-import { TrackRow } from '../components/TrackRow.tsx'
 import { AgentPanel } from '../components/AgentPanel.tsx'
 import type { Proposal } from '../components/AgentPanel.tsx'
 import { Icon } from '../components/Icon.tsx'
@@ -18,7 +17,6 @@ const TAGS = ['pop', 'indie', 'lo-fi', 'r&b', 'rock', 'jazz', 'city pop', 'folk'
 
 export function Create() {
   const t = useT()
-  const tracks = useApp((s) => s.tracks)
   const [tab, setTab] = useState<Tab>(() => (sessionStorage.getItem('sona.tab') as Tab) || 'song')
   const [title, setTitle] = useDraft('title')
   const [style, setStyle] = useDraft('style')
@@ -30,7 +28,7 @@ export function Create() {
   const [instrumental, setInstrumental] = useState(false)
   const [stemModel, setStemModel] = useState<'htdemucs' | 'htdemucs_ft'>('htdemucs')
   const [sending, setSending] = useState(false)
-  const [agentOpen, setAgentOpen] = useState(() => localStorage.getItem('sona.agentOpen') === '1')
+  const [agentOpen, setAgentOpen] = useState(() => localStorage.getItem('sona.agentOpen') !== '0')
   const ai = useApp((s) => s.system?.ai_tools)
   const aiOk = !!(ai?.claude || ai?.codex)
   const styleBox = useRef<HTMLTextAreaElement>(null)
@@ -190,10 +188,6 @@ export function Create() {
         </FeatureGate>
       </section>
 
-      <section className="create-recent scroll">
-        <h2 className="section-title">{t('create.recent')}</h2>
-        {tracks.slice(0, 30).map((tr, i, list) => <TrackRow key={tr.id} list={list} index={i} actions={false} />)}
-      </section>
       {agentShown && (
         <AgentPanel mode={agentMode} onApply={applyProposal} onClose={() => toggleAgent(false)}
           form={{ title, style, ...(hasLyrics ? { lyrics } : {}) }} />

@@ -25,6 +25,7 @@ const paths = {
   back: 'M14.5 5.5 8 12l6.5 6.5',
   check: 'M5 12.5l4.5 4.5L19 7.5',
   send: 'M12 19V5M6 11l6-6 6 6',
+  download: 'M12 5v11M7.5 11.5 12 16l4.5-4.5M5 19h14',
 }
 
 export type IconName = keyof typeof paths

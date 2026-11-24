@@ -3,7 +3,7 @@ import { fmtDuration, useT } from '../i18n.ts'
 import { useApp } from '../store.ts'
 import { Cover } from '../components/Cover.tsx'
 import { Icon } from '../components/Icon.tsx'
-import { DeleteButton, LikeButton, RevealButton } from '../components/TrackActions.tsx'
+import { DeleteButton, DownloadButton, LikeButton, RevealButton } from '../components/TrackActions.tsx'
 import { PlayOverlay, TrackRow } from '../components/TrackRow.tsx'
 
 export function Library() {
@@ -56,6 +56,7 @@ export function Library() {
                 <span className="muted small ellipsis">{[t(`kind.${tr.kind}`), tr.style].filter(Boolean).join(' · ')}</span>
                 <div className="card-actions">
                   <LikeButton track={tr} />
+                  <DownloadButton track={tr} />
                   <RevealButton track={tr} />
                   <DeleteButton track={tr} />
                 </div>

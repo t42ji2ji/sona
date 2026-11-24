@@ -6,7 +6,7 @@ import { featureReady, report, useApp } from '../store.ts'
 import type { StemName, Track } from '../types.ts'
 import { Cover } from '../components/Cover.tsx'
 import { Icon } from '../components/Icon.tsx'
-import { DeleteButton, LikeButton, RevealButton } from '../components/TrackActions.tsx'
+import { DeleteButton, DownloadButton, LikeButton, RevealButton } from '../components/TrackActions.tsx'
 
 export function TrackPage({ id }: { id: string }) {
   const t = useT()
@@ -36,6 +36,7 @@ export function TrackPage({ id }: { id: string }) {
           <Icon name={playing ? 'pause' : 'play'} size={24} />
         </button>
         <LikeButton track={track} />
+        <DownloadButton track={track} />
         <RevealButton track={track} />
         <DeleteButton track={track} after={() => go({ name: 'library' })} />
         {!track.stems?.length && track.kind !== 'voice' && stemsReady && (

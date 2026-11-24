@@ -166,8 +166,7 @@ textarea.lyrics { font-size: 14px; line-height: 1.7; min-height: 200px; }
 /* ── 建立 ── */
 .create { display: grid; grid-template-columns: minmax(340px, 500px) minmax(0, 1fr); }
 .create-form { padding: 16px 32px 48px 40px; display: flex; flex-direction: column; gap: 24px; }
-.create-recent { padding: 16px 16px 24px; border-left: 1px solid var(--line); }
-.create.with-agent { grid-template-columns: minmax(340px, 500px) minmax(0, 1fr) 360px; }
+.create.with-agent { grid-template-columns: minmax(340px, 560px) minmax(320px, 1fr); }
 .page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
 .page-head .page-title { margin-bottom: 0; }
 .page-head .btn { gap: 6px; }
@@ -204,10 +203,9 @@ textarea.lyrics { font-size: 14px; line-height: 1.7; min-height: 200px; }
 
 /* ── 作品列 ── */
 .track-row {
-  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto auto auto 44px; align-items: center; gap: 12px;
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto auto auto auto 44px; align-items: center; gap: 12px;
   padding: 6px 8px; border-radius: var(--radius); cursor: pointer; transition: background .15s;
 }
-.create-recent .track-row { grid-template-columns: 40px minmax(0, 1fr) auto 44px; }
 .track-row:hover { background: var(--fill); }
 .track-row.current .row-title { color: var(--text); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--line-hover); }
 .track-row .tabular { text-align: right; color: var(--muted); }
@@ -389,8 +387,7 @@ textarea.lyrics { font-size: 14px; line-height: 1.7; min-height: 200px; }
 
 @media (max-width: 1080px) {
   .create { grid-template-columns: minmax(0, 1fr); }
-  .create-recent { display: none; }
-  .create.with-agent { grid-template-columns: minmax(0, 1fr) 340px; }
+  .create.with-agent { grid-template-columns: minmax(0, 1fr) 320px; }
   .voice-grid { grid-template-columns: minmax(0, 1fr); }
 }
 

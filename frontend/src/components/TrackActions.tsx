@@ -1,4 +1,4 @@
-import { api } from '../api.ts'
+import { api, mediaUrl } from '../api.ts'
 import { useT } from '../i18n.ts'
 import { usePlayer } from '../player.ts'
 import { report, useApp } from '../store.ts'
@@ -27,6 +27,29 @@ export function RevealButton({ track }: { track: Track }) {
     <button className="icon-btn" title={t(win ? 'track.revealWin' : 'track.reveal')}
       onClick={(e) => { e.stopPropagation(); api.revealTrack(track.id).catch(report) }}>
       <Icon name="folder" size={18} />
+    </button>
+  )
+}
+
+/** 另存 mp3：同源 blob 才會套用檔名，Electron 會跳出存檔視窗 */
+export function DownloadButton({ track }: { track: Track }) {
+  const t = useT()
+  return (
+    <button className="icon-btn" title={t('track.download')}
+      onClick={async (e) => {
+        e.stopPropagation()
+        try {
+          const res = await fetch(mediaUrl(track.audio_url))
+          if (!res.ok) throw new Error(t('track.downloadFailed'))
+          const url = URL.createObjectURL(await res.blob())
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `${track.title.replace(/[\\/:*?"<>|]/g, '_')}.mp3`
+          a.click()
+          setTimeout(() => URL.revokeObjectURL(url), 60_000)
+        } catch (err) { report(err) }
+      }}>
+      <Icon name="download" size={18} />
     </button>
   )
 }
