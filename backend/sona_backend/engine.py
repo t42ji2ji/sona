@@ -38,6 +38,8 @@ class Worker:
         env = {k: v for k, v in os.environ.items() if k not in ("PYTHONPATH", "VIRTUAL_ENV", "PYTHONHOME")}
         env.update(PYTHONUNBUFFERED="1", PYTHONIOENCODING="utf-8", PYTHONNOUSERSITE="1",
                    HF_HUB_OFFLINE="1", PYTORCH_ENABLE_MPS_FALLBACK="1", TOKENIZERS_PARALLELISM="false")
+        if ENVS[engine] == "yue2-mlx":    # mlx-Yue refuses to run with MPS fallback on
+            env.pop("PYTORCH_ENABLE_MPS_FALLBACK")
         self.proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.log,
                                      text=True, encoding="utf-8", env=env)
 
