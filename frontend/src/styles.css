@@ -288,6 +288,7 @@ textarea.lyrics { font-size: 14px; line-height: 1.7; min-height: 200px; }
 .voice-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer; background: var(--surface); transition: background .15s; }
 .voice-item + .voice-item { border-top: 1px solid var(--line); }
 .voice-item:hover { background: var(--gray-100); }
+.voice-scrub { display: block; width: 100%; margin-top: 6px; }
 .voice-item.on { background: var(--gray-200); box-shadow: inset 2px 0 0 var(--text); }
 .polish-row { display: flex; margin-top: -8px; }
 .proposal { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: var(--radius); background: var(--surface); box-shadow: 0 0 0 1px var(--line); animation: enter .15s ease; }

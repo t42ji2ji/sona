@@ -139,17 +139,26 @@ export function VoicePage() {
 function VoiceItem({ voice, on, onSelect, onDelete }: { voice: Voice; on: boolean; onSelect: () => void; onDelete: () => void }) {
   const audio = useRef<HTMLAudioElement>(null)
   const [playing, setPlaying] = useState(false)
+  const [time, setTime] = useState(0)
+  const dur = voice.duration_s
   return (
     <div className={`voice-item ${on ? 'on' : ''}`} onClick={onSelect}>
-      <audio ref={audio} src={mediaUrl(voice.sample_url)} preload="none" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} />
+      <audio ref={audio} src={mediaUrl(voice.sample_url)} preload="none" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)}
+        onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} />
       <button className="icon-btn" onClick={(e) => { e.stopPropagation(); if (playing) audio.current?.pause(); else void audio.current?.play() }}>
         <Icon name={playing ? 'pause' : 'play'} size={16} />
       </button>
       <div className="row-main">
         <div className="row-title">{voice.name}</div>
         <div className="muted small ellipsis">{voice.transcript}</div>
+        {(on || playing) && (
+          <input type="range" className="range voice-scrub" min={0} max={dur || 1} step={0.1} value={Math.min(time, dur)}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => { const v = Number(e.target.value); setTime(v); if (audio.current) audio.current.currentTime = v }}
+            style={{ '--pct': `${dur ? (time / dur) * 100 : 0}%` } as React.CSSProperties} />
+        )}
       </div>
-      <span className="muted small tabular">{fmtDuration(voice.duration_s)}</span>
+      <span className="muted small tabular">{time > 0 ? `${fmtDuration(time)} / ` : ''}{fmtDuration(dur)}</span>
       <button className="icon-btn" onClick={(e) => { e.stopPropagation(); onDelete() }}><Icon name="trash" size={16} /></button>
     </div>
   )
